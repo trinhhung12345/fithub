@@ -41,8 +41,8 @@ class _SplashScreenState extends State<SplashScreen> {
             // Logo chính
             Image.asset(
               AppAssets.logo,
-              width: 150, // Điều chỉnh kích thước logo tùy ý
-              height: 150,
+              width: 317, // Điều chỉnh kích thước logo tùy ý
+              height: 114,
               fit: BoxFit.contain,
             ),
 
