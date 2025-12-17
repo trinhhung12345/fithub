@@ -5,6 +5,7 @@ import '../../../configs/app_text_styles.dart';
 import '../../../core/components/fit_hub_button.dart';
 import '../../../core/components/fit_hub_text_field.dart';
 import '../view_model/login_view_model.dart';
+import '../../forgot_password/view/forgot_password_screen.dart';
 import 'register_screen.dart'; // Import trang đăng ký sắp tạo
 
 class LoginScreen extends StatefulWidget {
@@ -81,18 +82,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Quên mật khẩu? ",
-                      style: AppTextStyles.body.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: "Đặt lại mật khẩu",
-                          style: AppTextStyles.link,
+                  child: GestureDetector(
+                    // <--- Bọc GestureDetector để bắt sự kiện
+                    onTap: () {
+                      // Import file forgot_password_screen.dart ở trên cùng nhé
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
                         ),
-                      ],
+                      );
+                    },
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Quên mật khẩu? ",
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Đặt lại mật khẩu",
+                            style: AppTextStyles.link,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
