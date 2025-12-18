@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../data/local/app_preferences.dart';
 import '../view/register_otp_screen.dart'; // Màn hình OTP mới cho đăng ký
 import '../../main/main_screen.dart';
 
@@ -82,6 +83,10 @@ class RegisterViewModel extends ChangeNotifier {
       if (res.code == 200) {
         // Đăng ký thành công -> Vào app luôn hoặc về login tùy bạn
         // Ở đây mình cho vào MainScreen luôn
+        if (res.data?.accessToken != null) {
+          await AppPreferences.saveToken(res.data!.accessToken!);
+        }
+
         if (context.mounted) {
           Navigator.pushAndRemoveUntil(
             context,

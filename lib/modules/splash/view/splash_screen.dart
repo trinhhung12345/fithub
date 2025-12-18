@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../configs/app_assets.dart';
 import '../../../configs/app_colors.dart';
 import '../../auth/view/login_screen.dart'; // Import màn hình Login
+import '../../../data/local/app_preferences.dart';
+import '../../main/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,20 +16,33 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
+    _checkLoginStatus();
   }
 
   // Hàm chuyển trang sau 3 giây
-  Future<void> _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
+  Future<void> _checkLoginStatus() async {
+    // Vẫn đợi 2-3 giây để user kịp nhìn thấy Logo
+    await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return; // Kiểm tra xem màn hình còn tồn tại không
+    // Lấy token từ bộ nhớ
+    final token = await AppPreferences.getToken();
 
-    // Dùng pushReplacement để user không back lại được Splash
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      // Đã có token -> Vào thẳng MainScreen (Trang chủ)
+      print("Token found: $token");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+    } else {
+      // Chưa có token -> Vào LoginScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override

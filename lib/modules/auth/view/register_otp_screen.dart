@@ -45,7 +45,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
               TextField(
                 onChanged: (val) => _otpCode = val,
                 decoration: const InputDecoration(
-                  hintText: "Nhập mã OTP (Ví dụ: 123456)",
+                  hintText: "Nhập mã OTP 6 số (Ví dụ: 123456)",
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,

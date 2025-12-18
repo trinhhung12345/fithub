@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/auth_model.dart';
 import '../../main/main_screen.dart'; // Import trang chính
+import '../../../data/local/app_preferences.dart';
 
 class LoginViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -22,8 +23,8 @@ class LoginViewModel extends ChangeNotifier {
 
       if (res.code == 200 && res.data?.accessToken != null) {
         // Login thành công
-        // TODO: Lưu token vào SharedPreferences tại đây nếu cần
-        print("Token: ${res.data!.accessToken}");
+        await AppPreferences.saveToken(res.data!.accessToken!);
+        print("Đã lưu token: ${res.data!.accessToken}");
 
         if (context.mounted) {
           Navigator.pushAndRemoveUntil(
