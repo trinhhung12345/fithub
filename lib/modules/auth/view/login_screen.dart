@@ -116,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 text: "Đăng nhập",
                 isLoading: viewModel.isLoading,
                 onPressed: () => viewModel.login(
+                  context,
                   _emailController.text,
                   _passController.text,
                 ),

@@ -5,6 +5,7 @@ import '../../../core/components/fit_hub_back_button.dart';
 import '../../../core/components/fit_hub_button.dart';
 import '../../../core/components/fit_hub_text_field.dart';
 import '../../auth/view/login_screen.dart';
+import '../../auth/view/success_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -55,13 +56,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               FitHubButton(
                 text: "Tiếp tục",
                 onPressed: () {
-                  // Reset xong thì quay về Login và xóa hết các màn hình trước đó
-                  Navigator.pushAndRemoveUntil(
+                  // Chuyển sang màn hình thông báo Thành công
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
+                      builder: (context) => const SuccessScreen(),
                     ),
-                    (route) => false,
                   );
                 },
               ),

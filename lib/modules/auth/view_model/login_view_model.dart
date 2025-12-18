@@ -1,20 +1,52 @@
 import 'package:flutter/material.dart';
-// import api service here
+import '../../../data/services/auth_service.dart';
+import '../../../data/models/auth_model.dart';
+import '../../main/main_screen.dart'; // Import trang chính
 
 class LoginViewModel extends ChangeNotifier {
+  final AuthService _authService = AuthService();
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(
+    BuildContext context,
+    String email,
+    String password,
+  ) async {
     _isLoading = true;
-    notifyListeners(); // Báo UI hiện loading
+    notifyListeners();
 
-    // Giả lập gọi API (sau này thay bằng code http thật)
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final res = await _authService.login(email, password);
 
-    print("Login với: $email / $password");
+      if (res.code == 200 && res.data?.accessToken != null) {
+        // Login thành công
+        // TODO: Lưu token vào SharedPreferences tại đây nếu cần
+        print("Token: ${res.data!.accessToken}");
 
-    _isLoading = false;
-    notifyListeners(); // Báo UI tắt loading
+        if (context.mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        _showError(context, res.message ?? "Đăng nhập thất bại");
+      }
+    } catch (e) {
+      _showError(context, "Lỗi kết nối: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void _showError(BuildContext context, String msg) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 }

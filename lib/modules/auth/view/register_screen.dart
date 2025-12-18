@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
   final _confirmPassController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   // Quản lý ẩn hiện cho 2 ô mật khẩu riêng biệt
   bool _isPassVisible = false;
@@ -65,6 +66,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
 
+              // --- Phone ---
+              FitHubTextField(
+                hintText: "Số điện thoại",
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+              ),
+
               // --- Password ---
               FitHubTextField(
                 hintText: "Mật khẩu",
@@ -106,12 +114,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 30),
 
               FitHubButton(
-                text: "Đăng ký ngay",
+                text: "Tiếp tục", // Đổi text thành Tiếp tục vì còn bước OTP
                 isLoading: viewModel.isLoading,
                 onPressed: () {
-                  viewModel.register(
+                  viewModel.sendOtp(
+                    context, // Truyền context để chuyển trang
                     _nameController.text,
                     _emailController.text,
+                    _phoneController.text, // Truyền phone
                     _passController.text,
                     _confirmPassController.text,
                   );
