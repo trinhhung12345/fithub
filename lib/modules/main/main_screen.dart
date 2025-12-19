@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../configs/app_colors.dart';
-import '../home/view/home_screen.dart'; // Import trang Home sắp làm
+import '../../core/components/fit_hub_bottom_nav.dart'; // Import Component Footer
+import '../home/view/home_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -12,45 +12,21 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // Danh sách các màn hình
   final List<Widget> _pages = [
     const HomeScreen(),
-    const Scaffold(body: Center(child: Text("Thông báo"))), // Placeholder
-    const Scaffold(body: Center(child: Text("Đơn hàng"))), // Placeholder
-    const Scaffold(body: Center(child: Text("Cá nhân"))), // Placeholder
+    const Scaffold(body: Center(child: Text("Thông báo"))),
+    const Scaffold(body: Center(child: Text("Đơn hàng"))),
+    const Scaffold(body: Center(child: Text("Cá nhân"))),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
+      // Sử dụng Component Footer đã tách
+      bottomNavigationBar: FitHubBottomNav(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed, // Giữ cố định vị trí icon
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: false, // Ẩn label như trong design
-        showUnselectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            label: "Noti",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            label: "Order",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profile",
-          ),
-        ],
       ),
     );
   }
