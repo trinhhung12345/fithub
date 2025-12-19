@@ -5,6 +5,8 @@ import 'modules/auth/view_model/register_view_model.dart'; // Import mới
 import 'modules/splash/view/splash_screen.dart';
 import 'configs/app_colors.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const MyApp());
 }
@@ -23,6 +25,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'FitHub',
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primaryColor: AppColors.primary,
