@@ -1,5 +1,7 @@
 import '../models/product_model.dart';
 import '../models/cart_model.dart';
+import '../models/order_model.dart';
+import '../models/notification_model.dart';
 
 class MockData {
   // Dữ liệu giả cho danh sách sản phẩm
@@ -94,6 +96,57 @@ class MockData {
         // mockImage tự xử lý trong Model Product
       ),
       quantity: 1,
+    ),
+  ];
+
+  static final List<OrderModel> orders = [
+    OrderModel(
+      id: "#456765",
+      status: "Đang xử lý",
+      itemCount: 4,
+      date: DateTime.now(),
+    ),
+    OrderModel(
+      id: "#354569",
+      status: "Đã giao",
+      itemCount: 2,
+      date: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+    OrderModel(
+      id: "#454809",
+      status: "Đã hủy",
+      itemCount: 1,
+      date: DateTime.now().subtract(const Duration(days: 5)),
+    ),
+    OrderModel(
+      id: "#112233",
+      status: "Đã giao",
+      itemCount: 5,
+      date: DateTime.now().subtract(const Duration(days: 10)),
+    ),
+  ];
+
+  static final List<NotificationModel> notifications = [
+    NotificationModel(
+      id: 1,
+      content:
+          "Gilbert, you placed and order check your order history for full details",
+      isUnread: true, // Có chấm đỏ
+      createdAt: DateTime.now(),
+    ),
+    NotificationModel(
+      id: 2,
+      content:
+          "Gilbert, Thank you for shopping with us we have canceled order #24568.",
+      isUnread: false,
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+    ),
+    NotificationModel(
+      id: 3,
+      content:
+          "Gilbert, your Order #24568 has been confirmed check your order history for full details",
+      isUnread: false,
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
   ];
 }

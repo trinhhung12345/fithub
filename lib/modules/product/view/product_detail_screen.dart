@@ -4,6 +4,8 @@ import '../../../configs/app_colors.dart';
 import '../../../configs/app_text_styles.dart';
 import '../view_model/product_detail_view_model.dart';
 import 'components/write_review_dialog.dart';
+import '../../cart/view/cart_screen.dart';
+import '../../cart/view_model/cart_view_model.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final int productId;
@@ -157,8 +159,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    // Xử lý thêm vào giỏ
-                    print("Thêm ${viewModel.quantity} sản phẩm vào giỏ");
+                    // --- LOGIC MỚI ---
+
+                    // 1. Gọi CartViewModel để thêm sản phẩm
+                    context.read<CartViewModel>().addToCart(
+                      product,
+                      viewModel.quantity,
+                    );
+
+                    // 2. Hiện thông báo nhỏ
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Đã thêm ${viewModel.quantity} ${product.name} vào giỏ!",
+                        ),
+                        duration: const Duration(seconds: 1),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+
+                    // 3. Chuyển sang màn hình Giỏ hàng
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CartScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

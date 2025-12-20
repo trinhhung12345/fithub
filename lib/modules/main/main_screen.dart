@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/components/fit_hub_bottom_nav.dart'; // Import Component Footer
 import '../home/view/home_screen.dart';
+import '../order/view/order_history_screen.dart';
+import '../notification/view/notification_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,8 +16,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const Scaffold(body: Center(child: Text("Thông báo"))),
-    const Scaffold(body: Center(child: Text("Đơn hàng"))),
+    const NotificationScreen(),
+    const OrderHistoryScreen(),
     const Scaffold(body: Center(child: Text("Cá nhân"))),
   ];
 

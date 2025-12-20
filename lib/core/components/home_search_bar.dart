@@ -6,6 +6,7 @@ import '../../configs/app_text_styles.dart';
 class HomeSearchBar extends StatelessWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback? onTap;
   final bool
   readOnly; // Nếu true: Bấm vào sẽ không hiện phím mà chuyển trang (nếu muốn)
@@ -14,6 +15,7 @@ class HomeSearchBar extends StatelessWidget {
     super.key,
     this.hintText = "Tìm kiếm sản phẩm : Đai lưng, ...",
     this.onChanged,
+    this.onSubmitted,
     this.onTap,
     this.readOnly = false,
   });
@@ -31,6 +33,7 @@ class HomeSearchBar extends StatelessWidget {
           enabled:
               !readOnly, // Nếu readOnly = true thì chặn nhập liệu trực tiếp
           onChanged: onChanged,
+          onSubmitted: onSubmitted,
           style: AppTextStyles.body,
           decoration: InputDecoration(
             hintText: hintText,

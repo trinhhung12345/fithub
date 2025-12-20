@@ -7,6 +7,10 @@ import 'configs/app_colors.dart';
 import 'modules/home/view_model/home_view_model.dart';
 import 'modules/product/view_model/product_list_view_model.dart';
 import 'modules/product/view_model/product_detail_view_model.dart';
+import 'modules/cart/view_model/cart_view_model.dart';
+import 'modules/checkout/view_model/checkout_view_model.dart';
+import 'modules/order/view_model/order_view_model.dart';
+import 'modules/notification/view_model/notification_view_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -31,6 +35,14 @@ class MyApp extends StatelessWidget {
         ), // Thêm dòng này
         ChangeNotifierProvider(
           create: (_) => ProductDetailViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(create: (_) => CartViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => CheckoutViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(create: (_) => OrderViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => NotificationViewModel(),
         ), // Thêm dòng này
       ],
       child: MaterialApp(

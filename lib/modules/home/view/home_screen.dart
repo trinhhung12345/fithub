@@ -12,6 +12,9 @@ import '../../../core/components/product_card.dart';
 import '../view_model/home_view_model.dart';
 import '../../product/view/product_list_screen.dart';
 import '../../product/view/product_detail_screen.dart';
+import '../../cart/view/cart_screen.dart';
+import '../../category/view/all_categories_screen.dart';
+import '../../search/view/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,19 +53,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 // 1. Header
                 HomeHeader(
                   avatarUrl: 'https://i.pravatar.cc/150?img=11',
-                  onCartTap: () {},
+                  onCartTap: () {
+                    // Chuyển sang màn hình Giỏ hàng
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CartScreen(),
+                      ),
+                    );
+                  },
                   onAvatarTap: () {},
                 ),
 
                 const SizedBox(height: 20),
 
                 // 2. Search
-                const HomeSearchBar(),
+                HomeSearchBar(
+                  readOnly: true, // Không cho nhập trực tiếp
+                  onTap: () {
+                    // Chuyển sang trang tìm kiếm
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 25),
 
                 // 3. Categories (Vẫn giữ TĨNH như yêu cầu)
-                FitHubSectionTitle(title: "Các loại dụng cụ"),
+                FitHubSectionTitle(
+                  title: "Các loại dụng cụ",
+                  onSeeAll: () {
+                    // Điều hướng sang trang Tất cả danh mục
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AllCategoriesScreen(),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 15),
                 _buildCategoriesRow(),
 
