@@ -172,7 +172,7 @@ class CartViewModel extends ChangeNotifier {
 
   // Xóa sản phẩm
   Future<void> removeItem(int cartItemId) async {
-    // 1. Tìm item trong danh sách hiện tại để lấy ProductId
+    // 1. Tìm item trong danh sách để lấy ProductId
     final index = _cartItems.indexWhere(
       (item) => item.cartItemId == cartItemId,
     );
@@ -180,7 +180,7 @@ class CartViewModel extends ChangeNotifier {
 
     final productId = _cartItems[index].productId;
 
-    // Logic Mock (Giữ nguyên để test UI nếu cần)
+    // Logic Mock
     if (AppConfig.mockCart) {
       _cartItems.removeAt(index);
       notifyListeners();
@@ -193,14 +193,25 @@ class CartViewModel extends ChangeNotifier {
 
     final response = await _cartService.removeCartItem(productId);
 
+    // --- SỬA ĐOẠN NÀY ---
     if (response != null) {
-      // --- XỬ LÝ QUAN TRỌNG ---
-      // API trả về item có quantity = 0, ta cần lọc nó đi trước khi hiển thị
-      _cartItems = response.items.where((item) => item.quantity > 0).toList();
+      // Thay vì thay thế cả list (_cartItems = ...), ta chỉ xóa item hiện tại
+      _cartItems.removeWhere((item) => item.cartItemId == cartItemId);
 
-      // Cập nhật tổng tiền từ server
-      _serverTotalPrice = response.totalPrice;
+      // Mẹo: Vì API remove có thể trả về totalPrice = 0 (như ví dụ bạn đưa),
+      // nên để an toàn nhất, sau khi xóa xong ta nên gọi lại loadCart() để đồng bộ chuẩn xác
+      // hoặc nếu bạn muốn nhanh thì giữ nguyên việc xóa local,
+      // nhưng nhớ là totalAmount sẽ được tính lại dựa trên _cartItems còn lại (nhờ getter totalAmount).
+
+      // Cập nhật lại _serverTotalPrice nếu API trả về đúng,
+      // còn nếu API trả về 0 thì ta reset biến này để getter totalAmount tự tính toán lại
+      if (response.totalPrice > 0) {
+        _serverTotalPrice = response.totalPrice;
+      } else {
+        _serverTotalPrice = 0; // Để getter tự tính lại dựa trên list còn lại
+      }
     }
+    // --------------------
 
     _isLoading = false;
     notifyListeners();
