@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../configs/app_config.dart';
 import '../../../data/mock/mock_data.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/services/product_service.dart';
 
 class ProductDetailViewModel extends ChangeNotifier {
   Product? _product;
@@ -25,15 +26,19 @@ class ProductDetailViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    if (AppConfig.mockProductDetail) {
-      await Future.delayed(const Duration(seconds: 1)); // Giả vờ load
-      _product = MockData.productDetail; // Lấy từ Mock
+    // Gọi Service (Service sẽ tự quyết định dùng Mock hay API dựa vào Config)
+    // Lưu ý: Cần khởi tạo service: final ProductService _service = ProductService();
+    // Hoặc nếu bạn đã inject service thì dùng nó.
 
-      // COPY danh sách từ Mock ra để có thể chỉnh sửa (add thêm)
-      _reviews = List.from(MockData.reviews);
-    } else {
-      // Sau này gọi API thật ở đây
-      // _product = await _service.getProductDetail(id);
+    // Code cũ của bạn có thể đang fix cứng Mock, hãy sửa thành gọi Service:
+    _product = await ProductService().getProductDetail(id);
+
+    // --- QUAN TRỌNG: TRỘN DỮ LIỆU ---
+    // Vì API chưa trả về Ảnh và Review, ta vẫn phải lấy từ MockData
+    // để giao diện không bị trống trơn.
+    if (_product != null) {
+      _reviews = List.from(MockData.reviews); // Lấy review giả
+      // Ảnh giả đã được xử lý trong Model Product.imageUrl rồi
     }
 
     _isLoading = false;

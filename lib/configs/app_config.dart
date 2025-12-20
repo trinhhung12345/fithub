@@ -11,7 +11,7 @@ class AppConfig {
   static const bool mockProductList = false;
 
   // 3. Product Detail (Chi tiết): Backend chưa làm -> Bật Mock
-  static const bool mockProductDetail = true;
+  static const bool mockProductDetail = false;
 
   // 4. Cart (Giỏ hàng): Backend chưa làm -> Bật Mock
   static const bool mockCart = true;

@@ -26,19 +26,32 @@ class ProductService {
     }
   }
 
-  // 2. Lấy chi tiết (Backend chưa làm -> dùng Config.mockProductDetail = true)
   Future<Product?> getProductDetail(int id) async {
+    // 1. Kiểm tra Mock
     if (AppConfig.mockProductDetail) {
       await Future.delayed(const Duration(seconds: 1));
-      // Lọc tìm trong list giả
       return MockData.products.firstWhere(
         (p) => p.id == id,
-        orElse: () => MockData.products[0],
+        orElse: () => MockData.productDetail,
       );
     }
 
-    // Code API thật (Chờ backend làm xong thì viết vào đây sau)
-    final response = await BaseClient.get('${AppConfig.baseUrl}/products/$id');
-    return Product.fromJson(response);
+    // 2. Gọi API thật
+    final url = '${AppConfig.baseUrl}/products/$id';
+
+    try {
+      // BaseClient tự động gắn Token
+      final json = await BaseClient.get(url);
+
+      // JSON trả về dạng: { code: 200, data: {...}, message: "..." }
+      if (json['code'] == 200 && json['data'] != null) {
+        return Product.fromJson(json['data']);
+      }
+
+      return null;
+    } catch (e) {
+      print("Lỗi lấy chi tiết SP: $e");
+      return null;
+    }
   }
 }
