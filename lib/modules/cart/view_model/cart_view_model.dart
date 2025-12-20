@@ -4,96 +4,212 @@ import '../../../configs/app_config.dart';
 import '../../../data/mock/mock_data.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/services/cart_service.dart';
 
 class CartViewModel extends ChangeNotifier {
+  final CartService _cartService = CartService();
+
   List<CartItem> _cartItems = [];
   List<CartItem> get cartItems => _cartItems;
+
+  double _serverTotalPrice = 0; // Tổng tiền do Server tính trả về
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // Tính tổng tiền toàn bộ giỏ hàng
+  // Tổng tiền: Ưu tiên lấy từ Server trả về, nếu không thì tự tính
   double get totalAmount {
+    if (!AppConfig.mockCart && _serverTotalPrice > 0) {
+      return _serverTotalPrice;
+    }
+    // Logic tự tính (cho Mock hoặc fallback)
     double total = 0;
     for (var item in _cartItems) {
-      total += item.totalPrice;
+      total += item.totalPrice; // item.totalPrice giờ cũng lấy từ API
     }
     return total;
   }
 
-  // Format tiền tệ cho UI
   String get formattedTotalAmount {
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
     return formatCurrency.format(totalAmount);
   }
 
-  // Load giỏ hàng
+  // --- HÀM ADD TO CART MỚI ---
+  Future<bool> addToCart(Product product, int quantity) async {
+    _isLoading = true;
+    notifyListeners();
+
+    // 1. Nếu đang Mock
+    if (AppConfig.mockCart) {
+      // ... giữ nguyên logic mock cũ ...
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
+    // 2. Gọi API thật
+    final response = await _cartService.addToCart(product.id, quantity);
+
+    if (response != null) {
+      // CẬP NHẬT DỮ LIỆU TỪ SERVER TRẢ VỀ
+      _cartItems = response.items;
+      _serverTotalPrice = response.totalPrice;
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } else {
+      // Thất bại
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // SỬA LẠI HÀM NÀY
   Future<void> loadCart() async {
     _isLoading = true;
     notifyListeners();
 
+    // 1. Logic Mock (giữ lại để test)
     if (AppConfig.mockCart) {
-      await Future.delayed(const Duration(milliseconds: 800)); // Giả vờ load
-      // Clone list để thao tác không ảnh hưởng gốc MockData static
-      _cartItems = List.from(MockData.cartItems);
+      await Future.delayed(const Duration(milliseconds: 800));
+      // _cartItems = List.from(MockData.cartItems);
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    // 2. Gọi API thật
+    final response = await _cartService.getCart();
+
+    if (response != null) {
+      // Cập nhật toàn bộ trạng thái giỏ hàng từ Server
+      _cartItems = response.items;
+      _serverTotalPrice = response.totalPrice;
     } else {
-      // Gọi API thật
+      // Nếu có lỗi (VD: Mất mạng), reset giỏ hàng về rỗng
+      _cartItems = [];
+      _serverTotalPrice = 0;
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  // Tăng số lượng
-  void increaseQuantity(int cartId) {
-    final index = _cartItems.indexWhere((item) => item.id == cartId);
-    if (index != -1) {
-      _cartItems[index].quantity++;
+  Future<void> increaseQuantity(int cartItemId) async {
+    // 1. Tìm item trong list local
+    final index = _cartItems.indexWhere(
+      (item) => item.cartItemId == cartItemId,
+    );
+    if (index == -1) return;
+
+    final currentItem = _cartItems[index];
+    final newQuantity = currentItem.quantity + 1;
+
+    // Lấy productId từ item hiện tại
+    final productId = currentItem.productId;
+
+    // Mock logic
+    if (AppConfig.mockCart) {
+      _cartItems[index].quantity = newQuantity;
       notifyListeners();
+      return;
     }
+
+    // API Logic
+    _isLoading = true;
+    notifyListeners();
+
+    // Gọi Service truyền vào productId
+    final response = await _cartService.updateCartItem(productId, newQuantity);
+
+    if (response != null) {
+      _cartItems = response.items;
+      _serverTotalPrice = response.totalPrice;
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   // Giảm số lượng
-  void decreaseQuantity(int cartId) {
-    final index = _cartItems.indexWhere((item) => item.id == cartId);
-    if (index != -1 && _cartItems[index].quantity > 1) {
-      _cartItems[index].quantity--;
+  Future<void> decreaseQuantity(int cartItemId) async {
+    final index = _cartItems.indexWhere(
+      (item) => item.cartItemId == cartItemId,
+    );
+    if (index == -1) return;
+
+    final currentItem = _cartItems[index];
+    if (currentItem.quantity <= 1) return;
+
+    final newQuantity = currentItem.quantity - 1;
+    final productId = currentItem.productId; // Lấy productId
+
+    // Mock logic
+    if (AppConfig.mockCart) {
+      _cartItems[index].quantity = newQuantity;
       notifyListeners();
+      return;
     }
+
+    // API Logic
+    _isLoading = true;
+    notifyListeners();
+
+    // Gọi Service truyền vào productId
+    final response = await _cartService.updateCartItem(productId, newQuantity);
+
+    if (response != null) {
+      _cartItems = response.items;
+      _serverTotalPrice = response.totalPrice;
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   // Xóa sản phẩm
-  void removeItem(int cartId) {
-    _cartItems.removeWhere((item) => item.id == cartId);
-    notifyListeners();
-  }
-
-  void addToCart(Product product, int quantity) {
-    // 1. Kiểm tra xem sản phẩm này đã có trong giỏ chưa
+  Future<void> removeItem(int cartItemId) async {
+    // 1. Tìm item trong danh sách hiện tại để lấy ProductId
     final index = _cartItems.indexWhere(
-      (item) => item.product.id == product.id,
+      (item) => item.cartItemId == cartItemId,
     );
+    if (index == -1) return;
 
-    if (index != -1) {
-      // 2a. Nếu có rồi -> Cộng thêm số lượng
-      _cartItems[index].quantity += quantity;
-    } else {
-      // 2b. Nếu chưa có -> Tạo CartItem mới
-      // (Mock ID giỏ hàng bằng thời gian hiện tại để không trùng)
-      final newCartItem = CartItem(
-        id: DateTime.now().millisecondsSinceEpoch,
-        product: product,
-        quantity: quantity,
-      );
-      _cartItems.add(newCartItem);
+    final productId = _cartItems[index].productId;
+
+    // Logic Mock (Giữ nguyên để test UI nếu cần)
+    if (AppConfig.mockCart) {
+      _cartItems.removeAt(index);
+      notifyListeners();
+      return;
     }
 
-    // 3. Cập nhật UI
+    // Logic API Thật
+    _isLoading = true;
+    notifyListeners();
+
+    final response = await _cartService.removeCartItem(productId);
+
+    if (response != null) {
+      // --- XỬ LÝ QUAN TRỌNG ---
+      // API trả về item có quantity = 0, ta cần lọc nó đi trước khi hiển thị
+      _cartItems = response.items.where((item) => item.quantity > 0).toList();
+
+      // Cập nhật tổng tiền từ server
+      _serverTotalPrice = response.totalPrice;
+    }
+
+    _isLoading = false;
     notifyListeners();
   }
 
+  // Xóa sạch giỏ hàng (chỉ xóa local)
   void clearCart() {
-    _cartItems.clear();
+    _cartItems = [];
+    _serverTotalPrice = 0;
     notifyListeners();
   }
 }

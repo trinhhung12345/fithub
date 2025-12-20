@@ -89,7 +89,7 @@ class _CartScreenState extends State<CartScreen> {
     var item,
   ) {
     return Dismissible(
-      key: Key(item.id.toString()),
+      key: Key(item.cartItemId.toString()),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -101,7 +101,7 @@ class _CartScreenState extends State<CartScreen> {
         child: const Icon(Icons.delete, color: Colors.red),
       ),
       onDismissed: (direction) {
-        viewModel.removeItem(item.id);
+        viewModel.removeItem(item.cartItemId);
       },
       child: Container(
         padding: const EdgeInsets.all(10),
@@ -155,7 +155,7 @@ class _CartScreenState extends State<CartScreen> {
                     children: [
                       _buildQtyIcon(
                         Icons.remove,
-                        () => viewModel.decreaseQuantity(item.id),
+                        () => viewModel.decreaseQuantity(item.cartItemId),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -166,7 +166,7 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       _buildQtyIcon(
                         Icons.add,
-                        () => viewModel.increaseQuantity(item.id),
+                        () => viewModel.increaseQuantity(item.cartItemId),
                       ),
                     ],
                   ),
@@ -176,7 +176,7 @@ class _CartScreenState extends State<CartScreen> {
 
             // Nút xóa
             IconButton(
-              onPressed: () => viewModel.removeItem(item.id),
+              onPressed: () => viewModel.removeItem(item.cartItemId),
               icon: const Icon(Icons.close, color: Colors.grey, size: 20),
             ),
           ],

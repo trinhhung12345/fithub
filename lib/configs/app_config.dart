@@ -14,9 +14,9 @@ class AppConfig {
   static const bool mockProductDetail = false;
 
   // 4. Cart (Giỏ hàng): Backend chưa làm -> Bật Mock
-  static const bool mockCart = true;
+  static const bool mockCart = false;
 
-  static const bool mockCheckout = true; // BẬT MOCK CHECKOUT
+  static const bool mockCheckout = false; // BẬT MOCK CHECKOUT
   static const bool mockOrder = true; // BẬT MOCK ORDER
   static const bool mockNotification = true;
 }

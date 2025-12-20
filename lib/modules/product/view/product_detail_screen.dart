@@ -158,33 +158,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    // --- LOGIC MỚI ---
+                  onPressed: () async {
+                    // Thêm async
+                    // 1. Gọi API thêm vào giỏ
+                    bool success = await context
+                        .read<CartViewModel>()
+                        .addToCart(product, viewModel.quantity);
 
-                    // 1. Gọi CartViewModel để thêm sản phẩm
-                    context.read<CartViewModel>().addToCart(
-                      product,
-                      viewModel.quantity,
-                    );
-
-                    // 2. Hiện thông báo nhỏ
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Đã thêm ${viewModel.quantity} ${product.name} vào giỏ!",
+                    if (success && context.mounted) {
+                      // 2. Hiện thông báo
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Thêm vào giỏ thành công!"),
+                          backgroundColor: Colors.green,
                         ),
-                        duration: const Duration(seconds: 1),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                      );
 
-                    // 3. Chuyển sang màn hình Giỏ hàng
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CartScreen(),
-                      ),
-                    );
+                      // 3. Chuyển trang
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CartScreen(),
+                        ),
+                      );
+                    } else if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Lỗi thêm vào giỏ hàng"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

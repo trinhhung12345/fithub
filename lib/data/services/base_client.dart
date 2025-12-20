@@ -58,4 +58,23 @@ class BaseClient {
     return jsonDecode(response.body);
     // Lưu ý: Nếu response không phải JSON chuẩn thì cần try-catch chỗ này
   }
+
+  static Future<dynamic> put(String url, dynamic body) async {
+    final token = await AppPreferences.getToken();
+
+    try {
+      final response = await _client.put(
+        // Sử dụng PUT
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception("Lỗi kết nối (PUT): $e");
+    }
+  }
 }

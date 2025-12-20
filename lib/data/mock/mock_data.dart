@@ -74,7 +74,8 @@ class MockData {
 
   static final List<CartItem> cartItems = [
     CartItem(
-      id: 101,
+      cartItemId: 101, // Đổi từ id thành cartItemId
+      productId: 1, // Thêm productId
       product: Product(
         id: 1,
         name: "Găng tay tập Gym thoáng khí",
@@ -86,7 +87,8 @@ class MockData {
       quantity: 2,
     ),
     CartItem(
-      id: 102,
+      cartItemId: 102, // Đổi từ id thành cartItemId
+      productId: 2, // Thêm productId
       product: Product(
         id: 2,
         name: "iPhone 15 Pro Max",

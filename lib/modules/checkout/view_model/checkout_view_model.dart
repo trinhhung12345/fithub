@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../configs/app_config.dart';
-import '../../cart/view_model/cart_view_model.dart'; // Cần access Cart để xóa
+import '../../cart/view_model/cart_view_model.dart';
+import '../../../data/services/checkout_service.dart'; // Import Service vừa tạo
 
 class CheckoutViewModel extends ChangeNotifier {
+  final CheckoutService _checkoutService =
+      CheckoutService(); // Khởi tạo Service
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // Phí ship giả định
   final double shippingFee = 30000;
 
-  // Giả lập gọi API đặt hàng
   Future<bool> placeOrder(
     CartViewModel cartViewModel, {
     required String name,
@@ -20,18 +22,22 @@ class CheckoutViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    bool success = false;
-
+    // 1. Logic Mock (Giữ lại để test UI nếu cần)
     if (AppConfig.mockCheckout) {
-      await Future.delayed(const Duration(seconds: 2)); // Giả vờ xử lý
-      success = true; // Luôn thành công
-    } else {
-      // Gọi API thật: POST /orders
-      // Body: { items: cartItems, address: ..., paymentMethod: "COD" }
+      await Future.delayed(const Duration(seconds: 2));
+      cartViewModel.clearCart();
+      _isLoading = false;
+      notifyListeners();
+      return true;
     }
 
+    // 2. Logic API Thật
+    // Lưu ý: Hiện tại API của bạn chỉ cần userId, chưa lưu địa chỉ/tên vào DB
+    // (Sau này nếu API update cần truyền address, bạn thêm vào body ở Service nhé)
+    final success = await _checkoutService.createOrder();
+
     if (success) {
-      // Đặt hàng thành công thì phải xóa sạch giỏ hàng
+      // Đặt hàng thành công -> Xóa giỏ hàng local để đồng bộ với server
       cartViewModel.clearCart();
     }
 
