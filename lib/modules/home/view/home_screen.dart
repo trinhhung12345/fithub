@@ -1,111 +1,139 @@
 import 'package:flutter/material.dart';
-import '../../../configs/app_assets.dart';
-import '../../../configs/app_text_styles.dart';
+import 'package:provider/provider.dart';
 
-// Import toàn bộ components
+// Imports giữ nguyên
+import '../../../configs/app_assets.dart';
+import '../../../configs/app_colors.dart';
+import '../../../configs/app_text_styles.dart';
 import '../../../core/components/home_header.dart';
 import '../../../core/components/home_search_bar.dart';
 import '../../../core/components/fit_hub_section_title.dart';
 import '../../../core/components/product_card.dart';
+import '../view_model/home_view_model.dart';
+import '../../product/view/product_list_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeViewModel>().init();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Mock Data
-    final products = [
-      {
-        'image':
-            'https://static.nike.com/a/images/c_limit,w_592,f_auto/t_product_v1/9769966c-54a4-4bf8-b543-96b66e30b057/m-j-ess-flc-short-x-ma-bQWvj1.png',
-        'name': 'Mohair Blouse',
-        'price': '\$24.55',
-        'oldPrice': '\$54.55',
-      },
-      {
-        'image':
-            'https://static.nike.com/a/images/c_limit,w_592,f_auto/t_product_v1/9769966c-54a4-4bf8-b543-96b66e30b057/m-j-ess-flc-short-x-ma-bQWvj1.png',
-        'name': 'Gym Short',
-        'price': '\$30.00',
-        'oldPrice': null,
-      },
-    ];
+    final viewModel = context.watch<HomeViewModel>();
+
+    // Lấy tối đa 5 sản phẩm đầu tiên
+    final top5Products = viewModel.products.take(5).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header (Mới)
-              HomeHeader(
-                avatarUrl: 'https://i.pravatar.cc/150?img=11', // Demo ảnh
-                onCartTap: () {
-                  print("Vào giỏ hàng");
-                },
-                onAvatarTap: () {
-                  print("Vào profile");
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              // 2. Search Bar
-              HomeSearchBar(onTap: () => print("Search...")),
-
-              const SizedBox(height: 25),
-
-              // 3. Categories
-              FitHubSectionTitle(
-                // Title (Mới)
-                title: "Các loại dụng cụ",
-                onSeeAll: () => print("Xem tất cả loại"),
-              ),
-              const SizedBox(height: 15),
-              _buildCategoriesRow(), // Cái này giữ nguyên vì logic map icon đơn giản
-
-              const SizedBox(height: 25),
-
-              // 4. Best Sellers
-              FitHubSectionTitle(
-                // Title (Mới)
-                title: "Mặt hàng bán chạy",
-                onSeeAll: () => print("Xem tất cả sp"),
-              ),
-              const SizedBox(height: 15),
-
-              // Gridview
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.65,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+        child: RefreshIndicator(
+          onRefresh: () => viewModel.fetchProducts(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header
+                HomeHeader(
+                  avatarUrl: 'https://i.pravatar.cc/150?img=11',
+                  onCartTap: () {},
+                  onAvatarTap: () {},
                 ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final item = products[index];
-                  return ProductCard(
-                    imageUrl: item['image']!,
-                    name: item['name']!,
-                    price: item['price']!,
-                    oldPrice: item['oldPrice'],
-                    onTap: () {},
-                  );
-                },
-              ),
-            ],
+
+                const SizedBox(height: 20),
+
+                // 2. Search
+                const HomeSearchBar(),
+
+                const SizedBox(height: 25),
+
+                // 3. Categories (Vẫn giữ TĨNH như yêu cầu)
+                FitHubSectionTitle(title: "Các loại dụng cụ"),
+                const SizedBox(height: 15),
+                _buildCategoriesRow(),
+
+                const SizedBox(height: 25),
+
+                // 4. Top 5 Newest Products (Carousel)
+                FitHubSectionTitle(
+                  title: "Sản phẩm mới nhất",
+                  // Bấm vào đây sau này sẽ sang trang ProductListScreen
+                  onSeeAll: () {
+                    // Chuyển sang màn hình danh sách
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductListScreen(
+                          title:
+                              "Sản phẩm mới nhất", // Hoặc tên danh mục bất kỳ
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 15),
+
+                // --- PHẦN CAROUSEL ---
+                if (viewModel.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (viewModel.errorMessage != null)
+                  // Nếu lỗi thì ẩn hoặc hiện text nhỏ
+                  Text("Lỗi tải: ${viewModel.errorMessage}")
+                else if (top5Products.isEmpty)
+                  const Center(child: Text("Chưa có sản phẩm nào."))
+                else
+                  // Dùng SizedBox để cố định chiều cao cho list ngang
+                  SizedBox(
+                    height: 260, // Chiều cao đủ cho Card sản phẩm
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal, // Lướt ngang
+                      itemCount: top5Products.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 16), // Khoảng cách giữa các thẻ
+                      itemBuilder: (context, index) {
+                        final product = top5Products[index];
+
+                        // Bọc trong SizedBox để cố định chiều rộng mỗi thẻ trong Carousel
+                        return SizedBox(
+                          width: 160, // Chiều rộng thẻ
+                          child: ProductCard(
+                            imageUrl: product.imageUrl,
+                            name: product.name,
+                            price: product.formattedPrice,
+                            // oldPrice: ...
+                            onTap: () {
+                              print("Xem chi tiết: ${product.name}");
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                // Khoảng trắng dưới cùng để không bị sát đáy
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Widget con này nhỏ và đặc thù của Home nên để đây cũng được, hoặc tách nốt tùy bạn
+  // Widget Categories Tĩnh
   Widget _buildCategoriesRow() {
     final categories = [
       {'icon': AppAssets.baoHo, 'label': 'Dụng cụ\nbảo hộ'},

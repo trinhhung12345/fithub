@@ -4,6 +4,8 @@ import 'modules/auth/view_model/login_view_model.dart';
 import 'modules/auth/view_model/register_view_model.dart'; // Import mới
 import 'modules/splash/view/splash_screen.dart';
 import 'configs/app_colors.dart';
+import 'modules/home/view_model/home_view_model.dart';
+import 'modules/product/view_model/product_list_view_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -21,6 +23,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LoginViewModel()),
         ChangeNotifierProvider(
           create: (_) => RegisterViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(create: (_) => HomeViewModel()), // Thêm dòng này
+        ChangeNotifierProvider(
+          create: (_) => ProductListViewModel(),
         ), // Thêm dòng này
       ],
       child: MaterialApp(
