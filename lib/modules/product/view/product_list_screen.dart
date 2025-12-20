@@ -5,6 +5,7 @@ import '../../../configs/app_text_styles.dart';
 import '../../../core/components/fit_hub_back_button.dart'; // Nút back tròn
 import '../../../core/components/product_card.dart'; // Thẻ sản phẩm
 import '../view_model/product_list_view_model.dart';
+import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
   final String title;
@@ -94,7 +95,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             price: product.formattedPrice,
                             // oldPrice: ... (nếu có)
                             onTap: () {
-                              print("Xem chi tiết ID: ${product.id}");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(
+                                    productId: product.id,
+                                  ),
+                                ),
+                              );
                             },
                             onFavorite: () {
                               print("Thả tim ID: ${product.id}");

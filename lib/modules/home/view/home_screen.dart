@@ -11,6 +11,7 @@ import '../../../core/components/fit_hub_section_title.dart';
 import '../../../core/components/product_card.dart';
 import '../view_model/home_view_model.dart';
 import '../../product/view/product_list_screen.dart';
+import '../../product/view/product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -115,7 +116,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             price: product.formattedPrice,
                             // oldPrice: ...
                             onTap: () {
-                              print("Xem chi tiết: ${product.name}");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(
+                                    productId: product.id,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                         );

@@ -6,6 +6,7 @@ import 'modules/splash/view/splash_screen.dart';
 import 'configs/app_colors.dart';
 import 'modules/home/view_model/home_view_model.dart';
 import 'modules/product/view_model/product_list_view_model.dart';
+import 'modules/product/view_model/product_detail_view_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -27,6 +28,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HomeViewModel()), // Thêm dòng này
         ChangeNotifierProvider(
           create: (_) => ProductListViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(
+          create: (_) => ProductDetailViewModel(),
         ), // Thêm dòng này
       ],
       child: MaterialApp(
