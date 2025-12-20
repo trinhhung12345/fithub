@@ -86,7 +86,10 @@ class CartViewModel extends ChangeNotifier {
 
     if (response != null) {
       // Cập nhật toàn bộ trạng thái giỏ hàng từ Server
-      _cartItems = response.items;
+      // --- SỬA TẠI ĐÂY ---
+      // Lọc bỏ những item có quantity = 0
+      _cartItems = response.items.where((item) => item.quantity > 0).toList();
+
       _serverTotalPrice = response.totalPrice;
     } else {
       // Nếu có lỗi (VD: Mất mạng), reset giỏ hàng về rỗng
@@ -126,7 +129,7 @@ class CartViewModel extends ChangeNotifier {
     final response = await _cartService.updateCartItem(productId, newQuantity);
 
     if (response != null) {
-      _cartItems = response.items;
+      _cartItems = response.items.where((item) => item.quantity > 0).toList();
       _serverTotalPrice = response.totalPrice;
     }
 
@@ -191,27 +194,21 @@ class CartViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final response = await _cartService.removeCartItem(productId);
+    // --- THAY ĐỔI QUAN TRỌNG ---
+    // Gọi API update với quantity = 0 để xóa
+    final response = await _cartService.updateCartItem(productId, 0);
 
-    // --- SỬA ĐOẠN NÀY ---
     if (response != null) {
-      // Thay vì thay thế cả list (_cartItems = ...), ta chỉ xóa item hiện tại
+      // API trả về danh sách (có thể vẫn chứa item quantity=0)
+      // Ta lọc bỏ ngay lập tức để UI sạch sẽ
+      _cartItems = response.items.where((item) => item.quantity > 0).toList();
+
+      // Cập nhật lại tổng tiền chuẩn từ server
+      _serverTotalPrice = response.totalPrice;
+    } else {
+      // Trường hợp mạng lag hoặc lỗi, xóa tạm ở local để người dùng đỡ khó chịu
       _cartItems.removeWhere((item) => item.cartItemId == cartItemId);
-
-      // Mẹo: Vì API remove có thể trả về totalPrice = 0 (như ví dụ bạn đưa),
-      // nên để an toàn nhất, sau khi xóa xong ta nên gọi lại loadCart() để đồng bộ chuẩn xác
-      // hoặc nếu bạn muốn nhanh thì giữ nguyên việc xóa local,
-      // nhưng nhớ là totalAmount sẽ được tính lại dựa trên _cartItems còn lại (nhờ getter totalAmount).
-
-      // Cập nhật lại _serverTotalPrice nếu API trả về đúng,
-      // còn nếu API trả về 0 thì ta reset biến này để getter totalAmount tự tính toán lại
-      if (response.totalPrice > 0) {
-        _serverTotalPrice = response.totalPrice;
-      } else {
-        _serverTotalPrice = 0; // Để getter tự tính lại dựa trên list còn lại
-      }
     }
-    // --------------------
 
     _isLoading = false;
     notifyListeners();

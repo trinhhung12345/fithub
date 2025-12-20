@@ -77,4 +77,28 @@ class BaseClient {
       throw Exception("Lỗi kết nối (PUT): $e");
     }
   }
+
+  // --- THÊM HÀM NÀY ---
+  static Future<dynamic> delete(String url, dynamic body) async {
+    final token = await AppPreferences.getToken();
+
+    try {
+      // Sử dụng request builder để đảm bảo gửi được Body trong lệnh DELETE
+      final request = http.Request('DELETE', Uri.parse(url));
+
+      request.headers.addAll({
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      });
+
+      request.body = jsonEncode(body);
+
+      final streamedResponse = await _client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception("Lỗi kết nối (DELETE): $e");
+    }
+  }
 }

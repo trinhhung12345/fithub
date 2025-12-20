@@ -121,15 +121,13 @@ class CartService {
     final userId = await TokenUtils.getUserId();
     if (userId == null) return null;
 
-    // URL: .../cart/remove
     final url = '${AppConfig.baseUrl}/cart/remove';
 
-    // Body: userId, productId
     final body = {"userId": userId, "productId": productId};
 
     try {
-      // Dùng POST theo yêu cầu
-      final json = await BaseClient.post(url, body);
+      // --- SỬA THÀNH DELETE ---
+      final json = await BaseClient.delete(url, body);
       return CartResponse.fromJson(json);
     } catch (e) {
       print("Lỗi Remove Cart: $e");
