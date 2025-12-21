@@ -2,6 +2,10 @@ import '../models/product_model.dart';
 import '../services/base_client.dart';
 import '../../configs/app_config.dart';
 import '../mock/mock_data.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import '../../data/local/app_preferences.dart';
+import 'dart:convert';
 
 class ProductService {
   // 1. Lấy danh sách (Backend đã xong -> dùng Config.mockProductList)
@@ -109,6 +113,90 @@ class ProductService {
     } catch (e) {
       print("Lỗi Get Products By Category: $e");
       return [];
+    }
+  }
+
+  Future<bool> addProduct({
+    required String name,
+    required String description,
+    required double price,
+    required int stock,
+    required int categoryId,
+    List<File>? images,
+  }) async {
+    final url = Uri.parse('${AppConfig.baseUrl}/products');
+    final token = await AppPreferences.getToken();
+
+    // 1. Tự tạo Boundary (Vách ngăn dữ liệu)
+    final String boundary =
+        '---FitHubBoundary${DateTime.now().millisecondsSinceEpoch}';
+
+    // 2. Cấu hình Header thủ công (Đảm bảo có boundary và KHÔNG có charset)
+    final Map<String, String> headers = {
+      'Content-Type': 'multipart/form-data; boundary=$boundary',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    // 3. Xây dựng Body (Dữ liệu)
+    final List<int> bodyBytes = [];
+
+    // Hàm tiện ích để thêm field text
+    void addFormField(String key, String value) {
+      bodyBytes.addAll('--$boundary\r\n'.codeUnits);
+      bodyBytes.addAll(
+        'Content-Disposition: form-data; name="$key"\r\n\r\n'.codeUnits,
+      );
+      bodyBytes.addAll(utf8.encode(value)); // Encode utf8 để hỗ trợ tiếng Việt
+      bodyBytes.addAll('\r\n'.codeUnits);
+    }
+
+    // Thêm các trường Text
+    addFormField('name', name);
+    addFormField('description', description);
+    addFormField('price', price.toString());
+    addFormField('stock', stock.toString());
+    addFormField('categoryId', categoryId.toString());
+
+    // 4. Thêm File (Ảnh)
+    if (images != null) {
+      for (var image in images) {
+        final String filename = image.path.split('/').last;
+        final List<int> imageBytes = await image.readAsBytes();
+
+        bodyBytes.addAll('--$boundary\r\n'.codeUnits);
+        bodyBytes.addAll(
+          'Content-Disposition: form-data; name="files"; filename="$filename"\r\n'
+              .codeUnits,
+        );
+        // Content-Type của ảnh (tùy chọn, Spring Boot thường tự nhận)
+        bodyBytes.addAll('Content-Type: image/jpeg\r\n\r\n'.codeUnits);
+        bodyBytes.addAll(imageBytes);
+        bodyBytes.addAll('\r\n'.codeUnits);
+      }
+    }
+
+    // 5. Kết thúc Body
+    bodyBytes.addAll('--$boundary--\r\n'.codeUnits);
+
+    try {
+      // 6. Gửi Request
+      final request = http.Request('POST', url);
+      request.headers.addAll(headers);
+      request.bodyBytes = bodyBytes;
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print("Lỗi upload thủ công: $e");
+      return false;
     }
   }
 }
