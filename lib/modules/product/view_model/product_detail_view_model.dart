@@ -4,6 +4,9 @@ import '../../../data/mock/mock_data.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/services/product_service.dart';
 
+import '../../../data/services/review_service.dart';
+import '../../../core/utils/token_utils.dart';
+
 class ProductDetailViewModel extends ChangeNotifier {
   Product? _product;
   Product? get product => _product;
@@ -21,46 +24,128 @@ class ProductDetailViewModel extends ChangeNotifier {
   // Biến chứa danh sách review (ban đầu lấy từ Mock)
   List<Map<String, dynamic>> _reviews = [];
   List<Map<String, dynamic>> get reviews => _reviews;
+  final ReviewService _reviewService = ReviewService();
 
   Future<void> loadProductDetail(int id) async {
     _isLoading = true;
     notifyListeners();
 
-    // Gọi Service (Service sẽ tự quyết định dùng Mock hay API dựa vào Config)
-    // Lưu ý: Cần khởi tạo service: final ProductService _service = ProductService();
-    // Hoặc nếu bạn đã inject service thì dùng nó.
-
-    // Code cũ của bạn có thể đang fix cứng Mock, hãy sửa thành gọi Service:
+    // 1. Load thông tin sản phẩm (API Detail)
     _product = await ProductService().getProductDetail(id);
 
-    // --- QUAN TRỌNG: TRỘN DỮ LIỆU ---
-    // Vì API chưa trả về Ảnh và Review, ta vẫn phải lấy từ MockData
-    // để giao diện không bị trống trơn.
-    if (_product != null) {
-      _reviews = List.from(MockData.reviews); // Lấy review giả
-      // Ảnh giả đã được xử lý trong Model Product.imageUrl rồi
+    // 2. Load đánh giá (API Review)
+    // Dù có mockProductDetail hay không, ta cứ gọi thử API review xem sao
+    // Nếu bạn muốn tắt hẳn Mock thì xóa cái if (AppConfig...) đi
+    if (!AppConfig.mockProductDetail) {
+      try {
+        final apiReviews = await _reviewService.getProductReviews(id);
+
+        // --- CHUYỂN ĐỔI DỮ LIỆU ĐỂ KHỚP VỚI UI CŨ ---
+        _reviews = apiReviews.map((r) {
+          return {
+            "id": r.id, // <-- QUAN TRỌNG: Lưu reviewId
+            "userId": r.userId, // <-- QUAN TRỌNG: Lưu userId để đối chiếu
+            "name": "User #${r.userId}",
+            "avatar": "https://i.pravatar.cc/150?u=${r.userId}",
+            "rating": r.rating,
+            "date": "Mới đây",
+            "content": r.comment,
+          };
+        }).toList();
+      } catch (e) {
+        print("Lỗi load review: $e");
+        _reviews = [];
+      }
+    } else {
+      // Logic Mock cũ
+      _reviews = List.from(MockData.reviews);
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  // --- HÀM MOCK THÊM ĐÁNH GIÁ ---
-  void addReview(int rating, String content) {
-    // Tạo một object review giả
-    final newReview = {
-      "name": "Bạn (Tôi)", // Tên người dùng hiện tại
-      "avatar": "https://i.pravatar.cc/150?img=12", // Avatar giả
-      "rating": rating,
-      "date": "Vừa xong", // Thời gian
-      "content": content,
-    };
+  Future<String?> addReview(int rating, String comment) async {
+    if (_product == null) return "Lỗi sản phẩm";
 
-    // Thêm vào đầu danh sách
-    _reviews.insert(0, newReview);
-
-    // Cập nhật UI
+    _isLoading = true;
     notifyListeners();
+
+    // 1. Gọi Service
+    final result = await _reviewService.createReview(
+      productId: _product!.id,
+      rating: rating,
+      comment: comment,
+    );
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (result['success'] == true) {
+      // 2. Nếu thành công:
+      // Cách A (An toàn nhất): Load lại toàn bộ detail để lấy list review mới từ server
+      // await loadProductDetail(_product!.id);
+
+      // Cách B (Nhanh, UX tốt): Tự tạo review giả chèn vào đầu list (để ko phải load lại API)
+      // Vì API post xong không trả về object Review vừa tạo, ta tự chế tạm để hiển thị ngay
+      final newReview = {
+        "name": "Bạn (Vừa xong)",
+        "avatar": "https://i.pravatar.cc/150?u=me", // Avatar tạm
+        "rating": rating,
+        "date": "Vừa xong",
+        "content": comment,
+      };
+      _reviews.insert(0, newReview);
+      notifyListeners();
+
+      return null; // Null nghĩa là không có lỗi
+    } else {
+      // 3. Nếu thất bại (VD: Đã review rồi)
+      return result['message']; // Trả về câu thông báo lỗi
+    }
+  }
+
+  Future<String?> editMyReview(int rating, String comment) async {
+    if (_product == null) return "Lỗi sản phẩm";
+
+    // 1. Lấy userId hiện tại
+    final currentUserId = await TokenUtils.getUserId();
+    if (currentUserId == null) return "Bạn cần đăng nhập";
+
+    // 2. Tìm bài đánh giá của tôi trong danh sách đã load
+    // Điều kiện: userId trong review trùng với userId đăng nhập
+    final myReviewIndex = _reviews.indexWhere(
+      (r) => r['userId'] == currentUserId,
+    );
+
+    if (myReviewIndex == -1) {
+      // Trường hợp hiếm: API báo đã review nhưng load list không thấy (hoặc chưa load lại)
+      // Thử reload lại page để lấy ID mới nhất
+      await loadProductDetail(_product!.id);
+      return "Vui lòng thử lại lần nữa (đã đồng bộ dữ liệu)";
+    }
+
+    final reviewId = _reviews[myReviewIndex]['id']; // Lấy ID bài đánh giá
+
+    _isLoading = true;
+    notifyListeners();
+
+    // 3. Gọi Service với reviewId
+    final result = await _reviewService.updateReview(
+      reviewId: reviewId, // <-- Truyền ID bài đánh giá
+      rating: rating,
+      comment: comment,
+    );
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (result['success'] == true) {
+      await loadProductDetail(_product!.id); // Reload để hiện nội dung mới
+      return null;
+    } else {
+      return result['message'];
+    }
   }
 
   void increaseQuantity() {

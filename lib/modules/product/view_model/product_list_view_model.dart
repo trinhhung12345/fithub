@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/services/product_service.dart';
+import '../../../configs/app_config.dart';
 
 class ProductListViewModel extends ChangeNotifier {
   final ProductService _productService = ProductService();
@@ -23,29 +24,33 @@ class ProductListViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      // Tạm thời gọi API lấy tất cả (sau này có thể truyền categoryId vào đây để lọc)
-      _products = await _productService.getProducts();
-      _originalProducts = List.from(_products); // Backup list gốc
-
-      // Nếu có keyword, lọc theo tên (Mock logic)
-      if (keyword != null && keyword.isNotEmpty) {
-        _products = _products
-            .where((p) => p.name.toLowerCase().contains(keyword.toLowerCase()))
-            .toList();
-        _originalProducts = List.from(_products);
-      }
-
-      // Nếu có categoryId, lọc theo category (Mock logic - cần thêm categoryId vào Product model)
-      // if (categoryId != null) {
-      //   _products = _products.where((p) => p.categoryId == categoryId).toList();
-      // }
-    } catch (e) {
-      print("Lỗi load danh sách: $e");
-    } finally {
+    // Logic Mock (Nếu đang bật)
+    if (AppConfig.mockProductList) {
+      // ... code mock cũ ...
       _isLoading = false;
       notifyListeners();
+      return;
     }
+
+    // Logic API Thật
+    try {
+      if (keyword != null && keyword.isNotEmpty) {
+        // A. Tìm kiếm
+        _products = await _productService.searchProducts(keyword);
+      } else if (categoryId != null) {
+        // --- B. LỌC THEO DANH MỤC (Logic mới thêm vào) ---
+        _products = await _productService.getProductsByCategory(categoryId);
+      } else {
+        // C. Lấy tất cả (Mặc định)
+        _products = await _productService.getProducts();
+      }
+    } catch (e) {
+      print("Lỗi Load Data: $e");
+      _products = [];
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   // Hàm Sort

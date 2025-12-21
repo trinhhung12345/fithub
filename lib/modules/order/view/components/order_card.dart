@@ -3,13 +3,17 @@ import '../../../../configs/app_text_styles.dart';
 
 class OrderCard extends StatelessWidget {
   final String orderCode;
-  final String itemCount;
+  final String itemCount; // Ví dụ: "3 items"
+  final String price; // Ví dụ: "6.860.000 đ" (Thêm cái này)
+  final String status; // Ví dụ: "NEW" (Thêm cái này)
   final VoidCallback onTap;
 
   const OrderCard({
     super.key,
     required this.orderCode,
     required this.itemCount,
+    required this.price,
+    required this.status,
     required this.onTap,
   });
 
@@ -48,13 +52,39 @@ class OrderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Order $orderCode",
-                    style: AppTextStyles.h2.copyWith(fontSize: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Đơn hàng #$orderCode",
+                        style: AppTextStyles.h2.copyWith(fontSize: 16),
+                      ),
+                      // Hiển thị trạng thái nhỏ bên cạnh
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: status == "NEW"
+                              ? Colors.blue.shade50
+                              : Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: status == "NEW" ? Colors.blue : Colors.green,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
+                  // Hiển thị số lượng và tổng tiền
                   Text(
-                    "$itemCount items",
+                    "$itemCount  |  $price",
                     style: AppTextStyles.body.copyWith(
                       color: Colors.grey,
                       fontSize: 13,

@@ -15,6 +15,7 @@ import '../../product/view/product_detail_screen.dart';
 import '../../cart/view/cart_screen.dart';
 import '../../category/view/all_categories_screen.dart';
 import '../../search/view/search_screen.dart';
+import '../../category/view_model/category_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().init();
+      context
+          .read<CategoryViewModel>()
+          .fetchCategories(); // <-- Gọi API lấy danh mục
     });
   }
 
@@ -176,31 +180,56 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Widget Categories Tĩnh
   Widget _buildCategoriesRow() {
-    final categories = [
-      {'icon': AppAssets.baoHo, 'label': 'Dụng cụ\nbảo hộ'},
-      {'icon': AppAssets.tapGym, 'label': 'Dụng cụ\ntập gym'},
-      {'icon': AppAssets.yoga, 'label': 'Phụ kiện\nyoga'},
-      {'icon': AppAssets.tayChan, 'label': 'Dụng cụ\ntay/chân'},
-    ];
+    // Lấy data từ ViewModel
+    final categoryViewModel = context.watch<CategoryViewModel>();
+    final categories = categoryViewModel.categories;
+
+    if (categoryViewModel.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (categories.isEmpty) {
+      return const Text("Không có danh mục");
+    }
+
+    // Chỉ hiển thị tối đa 4 cái trên trang chủ cho đẹp
+    final displayList = categories.take(4).toList();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: categories.map((cat) {
-        return Column(
-          children: [
-            SizedBox(
-              width: 50,
-              height: 50,
-              child: Image.asset(cat['icon']!, fit: BoxFit.contain),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              cat['label']!,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(fontSize: 12),
-            ),
-          ],
+      children: displayList.map((cat) {
+        return GestureDetector(
+          onTap: () {
+            // Bấm vào thì sang trang list sản phẩm lọc theo categoryId
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    ProductListScreen(title: cat.name, categoryId: cat.id),
+              ),
+            );
+          },
+          child: Column(
+            children: [
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: Image.asset(cat.iconPath, fit: BoxFit.contain),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 70, // Giới hạn chiều rộng text để không bị tràn
+                child: Text(
+                  cat.name, // Tên từ API (Điện thoại, Laptop...)
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.body.copyWith(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );

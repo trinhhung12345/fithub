@@ -103,28 +103,72 @@ class MockData {
 
   static final List<OrderModel> orders = [
     OrderModel(
-      id: "#456765",
+      id: 456765,
       status: "Đang xử lý",
-      itemCount: 4,
-      date: DateTime.now(),
+      totalAmount: 450000,
+      createdAt: DateTime.now().toIso8601String(),
+      items: [
+        OrderItem(
+          productId: 1,
+          productName: "Găng tay tập Gym",
+          quantity: 2,
+          price: 150000,
+        ),
+        OrderItem(
+          productId: 2,
+          productName: "Thảm Yoga",
+          quantity: 1,
+          price: 150000,
+        ),
+      ],
     ),
     OrderModel(
-      id: "#354569",
+      id: 354569,
       status: "Đã giao",
-      itemCount: 2,
-      date: DateTime.now().subtract(const Duration(days: 1)),
+      totalAmount: 300000,
+      createdAt: DateTime.now()
+          .subtract(const Duration(days: 1))
+          .toIso8601String(),
+      items: [
+        OrderItem(
+          productId: 1,
+          productName: "Găng tay tập Gym",
+          quantity: 2,
+          price: 150000,
+        ),
+      ],
     ),
     OrderModel(
-      id: "#454809",
+      id: 454809,
       status: "Đã hủy",
-      itemCount: 1,
-      date: DateTime.now().subtract(const Duration(days: 5)),
+      totalAmount: 148000,
+      createdAt: DateTime.now()
+          .subtract(const Duration(days: 5))
+          .toIso8601String(),
+      items: [
+        OrderItem(
+          productId: 3,
+          productName: "Đệm bảo vệ đầu gối",
+          quantity: 1,
+          price: 148000,
+        ),
+      ],
     ),
     OrderModel(
-      id: "#112233",
+      id: 112233,
       status: "Đã giao",
-      itemCount: 5,
-      date: DateTime.now().subtract(const Duration(days: 10)),
+      totalAmount: 750000,
+      createdAt: DateTime.now()
+          .subtract(const Duration(days: 10))
+          .toIso8601String(),
+      items: [
+        OrderItem(
+          productId: 1,
+          productName: "Găng tay tập Gym",
+          quantity: 5,
+          price: 150000,
+        ),
+      ],
     ),
   ];
 

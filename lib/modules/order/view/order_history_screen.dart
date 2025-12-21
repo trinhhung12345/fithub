@@ -6,6 +6,7 @@ import '../../../core/components/fit_hub_button.dart';
 import '../view_model/order_view_model.dart';
 import 'components/order_card.dart';
 import 'components/order_filter_bar.dart';
+import 'order_detail_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -66,11 +67,21 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           itemBuilder: (context, index) {
                             final order = viewModel.orders[index];
                             return OrderCard(
-                              orderCode: order.id,
-                              itemCount: "${order.itemCount}",
+                              orderCode: order.id.toString(),
+                              itemCount:
+                                  "${order.totalItemCount} sản phẩm", // Dùng helper trong model
+                              price: order
+                                  .formattedTotal, // Dùng helper trong model
+                              status: order.status,
                               onTap: () {
-                                print("Xem chi tiết đơn ${order.id}");
-                                // Navigator.push(OrderDetailScreen...)
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    // Truyền thẳng object order sang, không cần gọi API lại
+                                    builder: (context) =>
+                                        OrderDetailScreen(order: order),
+                                  ),
+                                );
                               },
                             );
                           },

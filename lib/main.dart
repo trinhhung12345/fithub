@@ -11,6 +11,7 @@ import 'modules/cart/view_model/cart_view_model.dart';
 import 'modules/checkout/view_model/checkout_view_model.dart';
 import 'modules/order/view_model/order_view_model.dart';
 import 'modules/notification/view_model/notification_view_model.dart';
+import 'modules/category/view_model/category_view_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -43,6 +44,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OrderViewModel()),
         ChangeNotifierProvider(
           create: (_) => NotificationViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(
+          create: (_) => CategoryViewModel(),
         ), // Thêm dòng này
       ],
       child: MaterialApp(

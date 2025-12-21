@@ -6,6 +6,7 @@ import '../view_model/product_detail_view_model.dart';
 import 'components/write_review_dialog.dart';
 import '../../cart/view/cart_screen.dart';
 import '../../cart/view_model/cart_view_model.dart';
+import '../../../core/components/fit_hub_dialog.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final int productId;
@@ -31,8 +32,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final viewModel = context.watch<ProductDetailViewModel>();
     final product = viewModel.product;
 
-    if (viewModel.isLoading || product == null) {
+    // 1. Chỉ hiện loading khi đang thực sự load
+    if (viewModel.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // 2. Nếu load xong mà không có sản phẩm -> Hiện báo lỗi
+    if (product == null) {
+      return Scaffold(
+        appBar: AppBar(), // Để có nút back
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 60, color: Colors.red),
+              const SizedBox(height: 10),
+              const Text("Không thể tải thông tin sản phẩm"),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<ProductDetailViewModel>().loadProductDetail(
+                    widget.productId,
+                  );
+                },
+                child: const Text("Thử lại"),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -362,16 +390,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => WriteReviewDialog(
-                    onSubmit: (rating, content) {
-                      // Gọi ViewModel để thêm review mock
-                      viewModel.addReview(rating, content);
+                  builder: (dialogContext) => WriteReviewDialog(
+                    onSubmit: (rating, content) async {
+                      // 1. Thử Gửi đánh giá mới (Add)
+                      final errorAdd = await context
+                          .read<ProductDetailViewModel>()
+                          .addReview(rating, content);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Cảm ơn bạn đã đánh giá!"),
-                        ),
-                      );
+                      if (!context.mounted) return;
+
+                      if (errorAdd == null) {
+                        // -> Thành công ngay lần đầu
+                        FitHubDialog.show(
+                          context,
+                          title: "Thành công",
+                          content: "Cảm ơn đánh giá của bạn!",
+                          buttonText: "Đóng",
+                        );
+                      } else {
+                        // 2. Nếu lỗi (nghi ngờ là đã đánh giá rồi), hỏi người dùng có muốn Cập nhật không?
+                        // (Bạn có thể check chuỗi errorAdd chứa chữ "already reviewed" để chắc chắn hơn)
+
+                        FitHubDialog.show(
+                          context,
+                          title: "Đã có đánh giá",
+                          content:
+                              "Bạn đã đánh giá sản phẩm này rồi. Bạn có muốn cập nhật lại nội dung không?",
+                          isSuccess: false, // Icon chấm than
+                          buttonText: "Cập nhật ngay",
+                          onPressed: () async {
+                            // --- GỌI HÀM CẬP NHẬT (UPDATE) ---
+                            final errorUpdate = await context
+                                .read<ProductDetailViewModel>()
+                                .editMyReview(rating, content);
+
+                            if (context.mounted) {
+                              if (errorUpdate == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Cập nhật thành công!"),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(errorUpdate),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        );
+                      }
                     },
                   ),
                 );

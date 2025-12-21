@@ -17,6 +17,6 @@ class AppConfig {
   static const bool mockCart = false;
 
   static const bool mockCheckout = false; // BẬT MOCK CHECKOUT
-  static const bool mockOrder = true; // BẬT MOCK ORDER
+  static const bool mockOrder = false; // BẬT MOCK ORDER
   static const bool mockNotification = true;
 }
