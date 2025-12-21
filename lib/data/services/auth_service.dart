@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../configs/app_config.dart';
 import '../models/auth_model.dart';
 
 class AuthService {
-  // Thay đổi IP này nếu cần. Lưu ý: http (không s) cần cấu hình AndroidManifest
-  static const String baseUrl = 'http://100.127.71.42:6868/api/v1/auth';
+  static const String baseUrl = '${AppConfig.baseUrl}/auth';
 
   // 1. Gửi OTP (Bước 1 Đăng ký)
   Future<AuthResponse> sendOtpRegister(String email, String phone) async {
