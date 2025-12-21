@@ -3,6 +3,7 @@ import '../../core/components/fit_hub_bottom_nav.dart'; // Import Component Foot
 import '../home/view/home_screen.dart';
 import '../order/view/order_history_screen.dart';
 import '../notification/view/notification_screen.dart';
+import '../profile/view/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const NotificationScreen(),
     const OrderHistoryScreen(),
-    const Scaffold(body: Center(child: Text("Cá nhân"))),
+    const ProfileScreen(),
   ];
 
   @override

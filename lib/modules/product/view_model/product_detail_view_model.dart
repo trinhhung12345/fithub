@@ -19,12 +19,14 @@ class ProductDetailViewModel extends ChangeNotifier {
 
   // Giả lập số liệu Backend chưa có
   int get soldCount => 90; // "Đã bán" (Mock)
-  List<String> get images => MockData.detailImages; // Ảnh (Mock)
 
   // Biến chứa danh sách review (ban đầu lấy từ Mock)
   List<Map<String, dynamic>> _reviews = [];
   List<Map<String, dynamic>> get reviews => _reviews;
   final ReviewService _reviewService = ReviewService();
+
+  List<String> _displayImages = [];
+  List<String> get images => _displayImages;
 
   Future<void> loadProductDetail(int id) async {
     _isLoading = true;
@@ -33,7 +35,18 @@ class ProductDetailViewModel extends ChangeNotifier {
     // 1. Load thông tin sản phẩm (API Detail)
     _product = await ProductService().getProductDetail(id);
 
-    // 2. Load đánh giá (API Review)
+    // 2. Cập nhật danh sách ảnh hiển thị
+    if (_product != null) {
+      if (_product!.files.isNotEmpty) {
+        // Nếu API có ảnh -> Map sang List String url
+        _displayImages = _product!.files.map((f) => f.originUrl).toList();
+      } else {
+        // Nếu API chưa có ảnh -> Dùng ảnh đại diện hoặc mock list
+        _displayImages = [_product!.imageUrl];
+      }
+    }
+
+    // 3. Load đánh giá (API Review)
     // Dù có mockProductDetail hay không, ta cứ gọi thử API review xem sao
     // Nếu bạn muốn tắt hẳn Mock thì xóa cái if (AppConfig...) đi
     if (!AppConfig.mockProductDetail) {

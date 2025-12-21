@@ -4,6 +4,7 @@ import '../../configs/app_config.dart';
 import '../mock/mock_data.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import '../../data/local/app_preferences.dart';
 import 'dart:convert';
 
@@ -196,6 +197,105 @@ class ProductService {
       return false;
     } catch (e) {
       print("Lỗi upload thủ công: $e");
+      return false;
+    }
+  }
+
+  Future<bool> updateProduct({
+    required int id,
+    required String name,
+    required String description,
+    required double price,
+    required int stock,
+    required int categoryId,
+    List<dynamic>?
+    finalImages, // List chứa cả File (ảnh mới) và String (URL ảnh cũ)
+  }) async {
+    final url = Uri.parse('${AppConfig.baseUrl}/products');
+    final token = await AppPreferences.getToken();
+    final boundary =
+        '---FitHubBoundary${DateTime.now().millisecondsSinceEpoch}';
+
+    final Map<String, String> headers = {
+      'Content-Type': 'multipart/form-data; boundary=$boundary',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final List<int> bodyBytes = [];
+
+    void addFormField(String key, String value) {
+      bodyBytes.addAll('--$boundary\r\n'.codeUnits);
+      bodyBytes.addAll(
+        'Content-Disposition: form-data; name="$key"\r\n\r\n'.codeUnits,
+      );
+      bodyBytes.addAll(utf8.encode(value));
+      bodyBytes.addAll('\r\n'.codeUnits);
+    }
+
+    // 1. Thêm các trường Text (Bao gồm cả ID)
+    addFormField('id', id.toString()); // <-- QUAN TRỌNG
+    addFormField('name', name);
+    addFormField('description', description);
+    addFormField('price', price.toString());
+    addFormField('stock', stock.toString());
+    addFormField('categoryId', categoryId.toString());
+
+    // 2. Xử lý Ảnh (Logic phức tạp ở đây)
+    if (finalImages != null) {
+      for (var img in finalImages) {
+        List<int>? imageBytes;
+        String filename = "image.jpg";
+
+        if (img is File) {
+          // A. Ảnh mới (File từ máy)
+          imageBytes = await img.readAsBytes();
+          filename = img.path.split('/').last;
+        } else if (img is String && img.startsWith('http')) {
+          // B. Ảnh cũ (URL) -> Phải tải về rồi mới gửi lại được
+          try {
+            final uri = Uri.parse(img);
+            final response = await http.get(uri);
+            if (response.statusCode == 200) {
+              imageBytes = response.bodyBytes;
+              filename = uri.pathSegments.last;
+            }
+          } catch (e) {
+            print("Lỗi tải ảnh cũ để re-upload: $e");
+          }
+        }
+
+        // Nếu có data ảnh thì đóng gói vào body
+        if (imageBytes != null) {
+          bodyBytes.addAll('--$boundary\r\n'.codeUnits);
+          bodyBytes.addAll(
+            'Content-Disposition: form-data; name="files"; filename="$filename"\r\n'
+                .codeUnits,
+          );
+          bodyBytes.addAll('Content-Type: image/jpeg\r\n\r\n'.codeUnits);
+          bodyBytes.addAll(imageBytes);
+          bodyBytes.addAll('\r\n'.codeUnits);
+        }
+      }
+    }
+
+    bodyBytes.addAll('--$boundary--\r\n'.codeUnits);
+
+    try {
+      // 3. Gửi PUT Request
+      final request = http.Request('PUT', url);
+      request.headers.addAll(headers);
+      request.bodyBytes = bodyBytes;
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print("Update Status: ${response.statusCode}");
+      print("Update Body: ${response.body}");
+
+      if (response.statusCode == 200) return true;
+      return false;
+    } catch (e) {
+      print("Lỗi update: $e");
       return false;
     }
   }

@@ -7,6 +7,7 @@ import 'components/write_review_dialog.dart';
 import '../../cart/view/cart_screen.dart';
 import '../../cart/view_model/cart_view_model.dart';
 import '../../../core/components/fit_hub_dialog.dart';
+import 'update_product_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final int productId;
@@ -161,6 +162,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     () => Navigator.pop(context),
                   ),
                   _buildCircleButton(Icons.favorite_border, () {}),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.black),
+                    onPressed: () {
+                      if (product != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                UpdateProductScreen(product: product),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
