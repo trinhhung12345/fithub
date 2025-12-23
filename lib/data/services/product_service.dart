@@ -11,23 +11,35 @@ import 'dart:convert';
 class ProductService {
   // 1. Lấy danh sách (Backend đã xong -> dùng Config.mockProductList)
   Future<List<Product>> getProducts() async {
-    // Nếu đang bật Mock HOẶC Server đang tắt (bạn tự bật tay)
+    // 1. Check Mock (Tắt rồi thì bỏ qua)
     if (AppConfig.mockProductList) {
       await Future.delayed(const Duration(seconds: 1));
-      return MockData.products; // List giả
+      return MockData.products;
     }
 
-    // Code gọi API thật
+    final url = '${AppConfig.baseUrl}/products';
+
     try {
-      final response = await BaseClient.get('${AppConfig.baseUrl}/products');
-      if (response is List) {
+      final response = await BaseClient.get(url);
+
+      // --- SỬA ĐOẠN NÀY ---
+
+      // Trường hợp 1: API trả về Object { code: 200, data: [...] } (Như JSON bạn gửi)
+      if (response is Map<String, dynamic> && response['data'] != null) {
+        final dataList = response['data'];
+        if (dataList is List) {
+          return dataList.map((json) => Product.fromJson(json)).toList();
+        }
+      }
+      // Trường hợp 2: API trả về List trực tiếp [...] (Phòng hờ)
+      else if (response is List) {
         return response.map((json) => Product.fromJson(json)).toList();
       }
+
       return [];
     } catch (e) {
-      // Mẹo: Nếu gọi API thật bị lỗi (do Server tắt), tự động fallback về Mock
-      print("⚠️ Server sập/tắt, chuyển sang dùng Mock Data tạm!");
-      return MockData.products;
+      print("Lỗi Get Products: $e");
+      return [];
     }
   }
 

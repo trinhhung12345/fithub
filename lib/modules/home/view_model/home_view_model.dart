@@ -21,14 +21,17 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> fetchProducts() async {
     _isLoading = true;
-    _errorMessage = null;
     notifyListeners();
 
     try {
       _products = await _productService.getProducts();
+
+      // --- THÊM DÒNG NÀY ĐỂ RANDOM ---
+      // Xáo trộn vị trí các phần tử trong list
+      _products.shuffle();
+      // -------------------------------
     } catch (e) {
       _errorMessage = "Không thể tải sản phẩm: $e";
-      print("Lỗi HomeViewModel: $e");
     } finally {
       _isLoading = false;
       notifyListeners();
