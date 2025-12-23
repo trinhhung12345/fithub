@@ -4,30 +4,29 @@ import '../../configs/app_config.dart';
 import '../../core/utils/token_utils.dart';
 
 class OrderService {
+  // Hàm lấy danh sách đơn hàng (URL Mới: /orders/my)
   Future<List<OrderModel>> getMyOrders() async {
     // 1. Check Mock
     if (AppConfig.mockOrder) {
-      return []; // Hoặc return MockData.orders nếu chưa muốn tắt
+      return [];
     }
 
-    // 2. Lấy UserId
-    final userId = await TokenUtils.getUserId();
-    if (userId == null) return [];
-
-    // 3. Cấu hình URL: .../orders/myOrder?userId=...
-    final url = '${AppConfig.baseUrl}/orders/myOrder?userId=$userId';
+    // 2. Cấu hình URL
+    // Không cần lấy userId thủ công nữa, Backend tự lấy từ Token
+    final url = '${AppConfig.baseUrl}/orders/my';
 
     try {
-      // 4. Gọi API (BaseClient tự gắn Token)
+      // 3. Gọi API (BaseClient tự gắn Token)
       final json = await BaseClient.get(url);
 
-      // 5. Parse kết quả
-      // API trả về: { code: 200, data: [ ...list orders... ] }
+      // 4. Parse kết quả
+      // JSON trả về: { "code": 200, "data": [ ...list... ] }
       if (json['code'] == 200 && json['data'] is List) {
         return (json['data'] as List)
             .map((e) => OrderModel.fromJson(e))
             .toList();
       }
+
       return [];
     } catch (e) {
       print("Lỗi Get Orders: $e");

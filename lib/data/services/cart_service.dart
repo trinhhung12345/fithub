@@ -8,40 +8,31 @@ class CartService {
   Future<CartResponse?> getCart() async {
     // 1. Kiểm tra Mock
     if (AppConfig.mockCart) {
-      // Logic Mock nếu cần, ví dụ trả về dữ liệu giả
       return null;
     }
 
-    // 2. Lấy userId từ Token
-    final userId = await TokenUtils.getUserId();
-    if (userId == null) {
-      print("Lỗi getCart: Không tìm thấy UserID");
-      return null;
-    }
-
-    // 3. Gọi API thật (GET)
-    final url = '${AppConfig.baseUrl}/cart/$userId';
+    // 2. Cấu hình URL
+    // Endpoint mới không cần truyền userId vào đường dẫn
+    final url = '${AppConfig.baseUrl}/cart/my';
 
     try {
-      // BaseClient tự gắn Token vào header
+      // 3. Gọi API (BaseClient sẽ tự động gắn Token vào Header)
       final json = await BaseClient.get(url);
 
-      // JSON trả về có cấu trúc giống hệt API add to cart,
-      // nên ta tái sử dụng CartResponse.fromJson
+      // 4. Parse kết quả
+      // Cấu trúc JSON vẫn khớp với Model CartResponse đã tạo
       return CartResponse.fromJson(json);
     } catch (e) {
-      // Xử lý lỗi: VD: User chưa có giỏ hàng, server trả 404
-      // Trong trường hợp này, trả về một giỏ hàng rỗng
-      if (e.toString().contains('404')) {
-        return CartResponse(
-          cartId: 0,
-          totalPrice: 0,
-          totalQuantity: 0,
-          items: [],
-        );
-      }
-      print("Lỗi getCart: $e");
-      return null;
+      print("Lỗi Get Cart: $e");
+
+      // Xử lý lỗi: Nếu server trả 404 (chưa có giỏ) hoặc lỗi khác
+      // Trả về giỏ hàng rỗng để UI không bị crash
+      return CartResponse(
+        cartId: 0,
+        totalPrice: 0,
+        totalQuantity: 0,
+        items: [],
+      );
     }
   }
 
