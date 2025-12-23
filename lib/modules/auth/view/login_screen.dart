@@ -50,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // --- Email ---
               FitHubTextField(
+                key: const Key('emailField'),
                 hintText: "Vui lòng nhập địa chỉ Email",
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -57,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // --- Password (Updated) ---
               FitHubTextField(
+                key: const Key('passwordField'),
                 hintText: "Nhập mật khẩu",
                 controller: _passController,
                 obscureText:
@@ -113,13 +115,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
               FitHubButton(
+                key: const Key('loginButton'),
                 text: "Đăng nhập",
                 isLoading: viewModel.isLoading,
-                onPressed: () => viewModel.login(
-                  context,
-                  _emailController.text,
-                  _passController.text,
-                ),
+                onPressed: () {
+                  // --- THÊM VALIDATION ---
+                  if (_emailController.text.isEmpty ||
+                      _passController.text.isEmpty) {
+                    // Hiện thông báo lỗi (dùng FitHubDialog hoặc SnackBar đều được)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Vui lòng nhập đầy đủ Email và Mật khẩu"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return; // Dừng lại, không gọi API
+                  }
+                  // -----------------------
+
+                  viewModel.login(
+                    context,
+                    _emailController.text,
+                    _passController.text,
+                  );
+                },
               ),
 
               const SizedBox(height: 20),

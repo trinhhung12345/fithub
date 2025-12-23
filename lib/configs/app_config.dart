@@ -1,6 +1,6 @@
 class AppConfig {
   // Config chung
-  static const String baseUrl = 'http://100.127.71.42:6868/api/v1';
+  static const String baseUrl = 'http://100.102.253.78:6868/api/v1';
 
   // --- CÔNG TẮC CHI TIẾT ---
 
