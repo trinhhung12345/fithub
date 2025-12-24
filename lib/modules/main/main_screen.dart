@@ -42,7 +42,13 @@ class _MainScreenState extends State<MainScreen> {
                   isScrollControlled:
                       true, // Để popup full cao và đẩy được bàn phím
                   backgroundColor: Colors.transparent,
-                  builder: (context) => const ChatBotSheet(),
+                  builder: (context) => Padding(
+                    // Đẩy bottom sheet lên trên bàn phím
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: const ChatBotSheet(),
+                  ),
                 );
               },
               backgroundColor: AppColors.primary, // Màu cam chủ đạo

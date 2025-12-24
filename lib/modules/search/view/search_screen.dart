@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../configs/app_colors.dart';
 import '../../../configs/app_text_styles.dart';
 import '../../../core/components/fit_hub_back_button.dart';
 import '../../../core/components/fit_hub_button.dart';
 import '../../../core/components/home_search_bar.dart';
+import '../../category/view_model/category_view_model.dart'; // Import ViewModel
 import '../../product/view/product_list_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -14,17 +16,19 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // Danh sách danh mục gợi ý
-  final categories = ["Hoodies", "Accessories", "Shorts", "Shoes", "Bags"];
-  final images = [
-    "https://cdn-icons-png.flaticon.com/512/9310/9310069.png", // Hoodie icon
-    "https://cdn-icons-png.flaticon.com/512/2806/2806166.png", // Glasses
-    "https://cdn-icons-png.flaticon.com/512/2275/2275496.png", // Shorts
-    "https://cdn-icons-png.flaticon.com/512/2589/2589903.png", // Shoes
-    "https://cdn-icons-png.flaticon.com/512/2855/2855845.png", // Bag
-  ];
+  bool _isNotFound = false;
 
-  bool _isNotFound = false; // Biến test trạng thái "Không tìm thấy"
+  @override
+  void initState() {
+    super.initState();
+    // Gọi API lấy danh mục (nếu chưa có data)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = context.read<CategoryViewModel>();
+      if (viewModel.categories.isEmpty) {
+        viewModel.fetchCategories();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,19 +50,17 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: HomeSearchBar(
                       hintText: "Search",
                       onChanged: (val) {
-                        // Logic test: Gõ "ao" thì hiện, gõ "xyz" thì báo lỗi
-                        setState(() {
-                          _isNotFound = val.contains("xyz");
-                        });
+                        // Reset trạng thái not found khi gõ
+                        if (_isNotFound) setState(() => _isNotFound = false);
                       },
-                      // Quan trọng: Khi bấm Enter -> Chuyển sang ProductListScreen
                       onSubmitted: (value) {
-                        if (value.isNotEmpty && !_isNotFound) {
+                        if (value.isNotEmpty) {
+                          // Chuyển sang trang kết quả tìm kiếm
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => ProductListScreen(
-                                title: value, // Title là từ khóa
+                                title: value,
                                 keyword: value,
                               ),
                             ),
@@ -74,7 +76,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
               // Nội dung chính
               Expanded(
-                child: _isNotFound ? _buildNotFound() : _buildCategories(),
+                child: _isNotFound
+                    ? _buildNotFound()
+                    : _buildCategories(context),
               ),
             ],
           ),
@@ -83,8 +87,20 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // Giao diện Shop by Categories (Ảnh 1)
-  Widget _buildCategories() {
+  // Giao diện Shop by Categories (Dữ liệu thật từ API)
+  Widget _buildCategories(BuildContext context) {
+    // Lắng nghe ViewModel
+    final categoryViewModel = context.watch<CategoryViewModel>();
+    final categories = categoryViewModel.categories;
+
+    if (categoryViewModel.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (categories.isEmpty) {
+      return const Center(child: Text("Không có danh mục nào"));
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -98,24 +114,52 @@ class _SearchScreenState extends State<SearchScreen> {
             itemCount: categories.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF4F4F4),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Image.network(images[index], width: 40, height: 40),
-                    const SizedBox(width: 16),
-                    Text(
-                      categories[index],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
+              final category = categories[index];
+
+              return GestureDetector(
+                onTap: () {
+                  // Chuyển sang trang danh sách sản phẩm theo danh mục này
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProductListScreen(
+                        title: category.name,
+                        categoryId: category.id,
                       ),
                     ),
-                  ],
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F4F4), // Màu xám nhạt
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      // Icon từ Assets (Đã map trong CategoryModel)
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Image.asset(
+                          category.iconPath,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Tên danh mục từ API
+                      Expanded(
+                        child: Text(
+                          category.name, // Ví dụ: "Túi", "Giày", "Phụ kiện"
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -125,7 +169,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // Giao diện Không tìm thấy (Ảnh 2)
+  // Giao diện Không tìm thấy (Giữ nguyên)
   Widget _buildNotFound() {
     return Center(
       child: Column(
@@ -138,7 +182,7 @@ class _SearchScreenState extends State<SearchScreen> {
               color: AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.search, size: 50, color: AppColors.primary),
+            child: const Icon(Icons.search, size: 50, color: AppColors.primary),
           ),
           const SizedBox(height: 20),
           const Text(
@@ -148,16 +192,6 @@ class _SearchScreenState extends State<SearchScreen> {
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 30),
-          SizedBox(
-            width: 200,
-            child: FitHubButton(
-              text: "Explore Categories",
-              onPressed: () {
-                setState(() => _isNotFound = false); // Quay lại list danh mục
-              },
             ),
           ),
         ],

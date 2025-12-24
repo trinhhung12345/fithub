@@ -133,7 +133,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 FitHubSectionTitle(
                   title: "Sản phẩm gợi ý", // Đổi tên cho hợp lý
                   onSeeAll: () {
-                    // Logic xem tất cả
+                    // --- THÊM CODE ĐIỀU HƯỚNG TẠI ĐÂY ---
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductListScreen(
+                          title: "Tất cả sản phẩm", // Tiêu đề màn hình mới
+                          // Không truyền keyword -> Không tìm kiếm
+                          // Không truyền categoryId -> Không lọc danh mục
+                          // => ViewModel sẽ tự động gọi API lấy tất cả (getProducts)
+                        ),
+                      ),
+                    );
+                    // ------------------------------------
                   },
                 ),
                 const SizedBox(height: 15),

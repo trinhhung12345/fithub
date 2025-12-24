@@ -46,6 +46,8 @@ class _ChatBotContentState extends State<_ChatBotContent> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<ChatViewModel>();
+
+    // Lấy chiều cao bàn phím
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     // Tự động cuộn xuống khi có tin nhắn mới
@@ -54,50 +56,60 @@ class _ChatBotContentState extends State<_ChatBotContent> {
     }
 
     return Container(
+      // Chiều cao linh động: 85% màn hình + chiều cao bàn phím (để không bị che khi gõ)
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        children: [
-          // HEADER
-          _buildHeader(context),
+      // --- THÊM SafeArea VÀO ĐÂY ---
+      child: SafeArea(
+        top: false, // Không cần tránh tai thỏ (vì là bottom sheet)
+        bottom: true, // QUAN TRỌNG: Tránh thanh điều hướng dưới đáy
+        child: Column(
+          children: [
+            // HEADER
+            _buildHeader(context),
 
-          // LIST MESSAGE
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount:
-                  viewModel.messages.length + (viewModel.isTyping ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == viewModel.messages.length) {
-                  return const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 10, bottom: 10),
-                      child: Text(
-                        "Bot đang nhập...",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
+            // LIST MESSAGE
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount:
+                    viewModel.messages.length + (viewModel.isTyping ? 1 : 0),
+                itemBuilder: (context, index) {
+                  // ... (giữ nguyên logic cũ) ...
+                  if (index == viewModel.messages.length) {
+                    return const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 10, bottom: 10),
+                        child: Text(
+                          "Bot đang nhập...",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
-                    ),
+                    );
+                  }
+                  return _buildMessageItem(
+                    context,
+                    viewModel.messages[index],
+                    viewModel,
                   );
-                }
-
-                final msg = viewModel.messages[index];
-                return _buildMessageItem(context, msg, viewModel);
-              },
+                },
+              ),
             ),
-          ),
 
-          // INPUT
-          _buildInputArea(viewModel, bottomPadding),
-        ],
+            // INPUT AREA
+            // Truyền bottomPadding vào để xử lý khi bàn phím hiện
+            _buildInputArea(viewModel, bottomPadding),
+          ],
+        ),
       ),
     );
   }
@@ -292,12 +304,20 @@ class _ChatBotContentState extends State<_ChatBotContent> {
 
   Widget _buildInputArea(ChatViewModel viewModel, double bottomPadding) {
     return Container(
+      // Padding:
+      // - Ngang: 16
+      // - Trên: 10
+      // - Dưới: 10 + bottomPadding (để đẩy lên khi có phím)
       padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + bottomPadding),
+
       decoration: BoxDecoration(
         color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade200),
+        ), // Thêm viền trên cho đẹp
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
             offset: const Offset(0, -2),
           ),
@@ -318,14 +338,11 @@ class _ChatBotContentState extends State<_ChatBotContent> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 10,
-                ),
+                  vertical: 12,
+                ), // Tăng padding dọc chút cho đẹp
               ),
               onSubmitted: (val) {
-                viewModel.sendMessage(
-                  val,
-                  isSuggestion: false,
-                ); // Gõ tay là false
+                viewModel.sendMessage(val, isSuggestion: false);
                 _controller.clear();
               },
             ),
@@ -333,11 +350,12 @@ class _ChatBotContentState extends State<_ChatBotContent> {
           const SizedBox(width: 10),
           GestureDetector(
             onTap: () {
-              viewModel.sendMessage(_controller.text);
+              viewModel.sendMessage(_controller.text, isSuggestion: false);
               _controller.clear();
             },
             child: const CircleAvatar(
               backgroundColor: AppColors.primary,
+              radius: 22, // Tăng kích thước nút gửi một chút
               child: Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
