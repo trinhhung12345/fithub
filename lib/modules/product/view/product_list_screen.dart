@@ -32,7 +32,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
-    // Load dữ liệu khi vào màn hình
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductListViewModel>().loadData(
         keyword: widget.keyword,
@@ -42,32 +41,29 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   // Hàm hiện Sort Modal
-  void _showSort() {
+  // Hàm hiện Sort Modal
+  void _showSort(ProductListViewModel viewModel) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => SortBottomSheet(
-        currentSort: _currentSort,
+        currentSort: viewModel.currentSort, // Lấy từ VM
         onApply: (val) {
-          setState(() => _currentSort = val);
-          // Gọi ViewModel sort lại
-          context.read<ProductListViewModel>().sortProducts(val);
+          viewModel.setSortFilter(val); // Gọi VM
         },
       ),
     );
   }
 
   // Hàm hiện Price Modal
-  void _showPrice() {
+  void _showPrice(ProductListViewModel viewModel) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Để đẩy lên khi hiện phím
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => PriceFilterBottomSheet(
         onApply: (min, max) {
-          print("Lọc giá từ $min đến $max");
-          // Gọi ViewModel lọc giá
-          context.read<ProductListViewModel>().filterPrice(min, max);
+          viewModel.setPriceFilter(min, max); // Gọi VM
         },
       ),
     );
@@ -137,33 +133,51 @@ class _ProductListScreenState extends State<ProductListScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  // Nút Sort
+                  // NÚT RESET (Chỉ hiện khi có filter)
+                  if (viewModel.isFiltered) ...[
+                    GestureDetector(
+                      onTap: () => viewModel.resetFilters(),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.refresh,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
                   FilterChipItem(
-                    label: "Sort by",
-                    onTap: _showSort,
-                    isSelected: false,
+                    label: viewModel.currentSort == "Recommended"
+                        ? "Sort by"
+                        : viewModel.currentSort,
+                    isSelected:
+                        viewModel.currentSort !=
+                        "Recommended", // Highlight nếu đang sort
                     showDropdownIcon: true,
+                    onTap: () => _showSort(viewModel),
                   ),
-                  // Nút On Sale
-                  FilterChipItem(
-                    label: "On Sale",
-                    onTap: () {},
-                    isSelected: true, // Ví dụ đang chọn
-                    showDropdownIcon: false,
-                  ),
+
                   // Nút Price
                   FilterChipItem(
                     label: "Price",
-                    onTap: _showPrice,
-                    isSelected: false,
+                    isSelected:
+                        false, // Bạn có thể thêm getter checkPrice ở VM nếu muốn highlight
                     showDropdownIcon: true,
+                    onTap: () => _showPrice(viewModel),
                   ),
-                  // Nút Gender (Mock)
+
+                  // Nút Mock khác (On Sale...)
                   FilterChipItem(
-                    label: "Men",
+                    label: "On Sale",
                     onTap: () {},
-                    isSelected: true,
-                    showDropdownIcon: true,
+                    isSelected: false,
+                    showDropdownIcon: false,
                   ),
                 ],
               ),
@@ -178,7 +192,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "${viewModel.products.length} Results Found",
+                  // Ví dụ: "Found 2 results"
+                  "Found ${viewModel.products.length} results",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
