@@ -25,15 +25,17 @@ class CartItem {
       quantity: json['quantity'] ?? 1,
       totalPrice: (json['totalPrice'] ?? 0).toDouble(),
 
-      // TẠO PRODUCT GIẢ LẬP TỪ THÔNG TIN TRONG CART
-      // Vì API Cart trả về tên, giá nhưng ko trả về ảnh,
-      // Product Model sẽ tự xử lý ảnh giả dựa trên tên.
+      // TẠO PRODUCT GIẢ LẬP
       product: Product(
         id: json['productId'] ?? 0,
         name: json['productName'] ?? "Sản phẩm",
-        description: "", // Cart ko trả về mô tả
+        description: "",
         price: (json['productPrice'] ?? 0).toDouble(),
-        stock: 999, // Trong giỏ hàng ko quan tâm tồn kho hiển thị
+        stock: 999,
+
+        // --- THÊM DÒNG NÀY ĐỂ FIX LỖI ---
+        active: true, // Mặc định là true vì API Cart không trả về field này
+        // -------------------------------
       ),
     );
   }

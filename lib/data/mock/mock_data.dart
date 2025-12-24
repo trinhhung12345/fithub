@@ -12,8 +12,8 @@ class MockData {
       description: "Găng tay xịn xò",
       price: 150000,
       stock: 10,
-      mockImage:
-          "https://example.com/gang-tay.png", // Dùng link ảnh mạng bất kỳ
+      mockImage: "https://example.com/gang-tay.png",
+      active: true, // Dùng link ảnh mạng bất kỳ
     ),
     Product(
       id: 2,
@@ -22,6 +22,7 @@ class MockData {
       price: 300000,
       stock: 5,
       mockImage: "https://example.com/tham-yoga.png",
+      active: true, // Dùng link ảnh mạng bất kỳ
     ),
     // ... Thêm bao nhiêu tùy thích
   ];
@@ -43,6 +44,7 @@ class MockData {
         "Đệm bảo vệ khớp gối chất liệu neoprene, co giãn, điều chỉnh linh hoạt. Hỗ trợ tốt cho các bài tập nặng...",
     price: 148000,
     stock: 123, // "Còn lại"
+    active: true,
     // Các trường giả lập thêm (Model chưa có thì cứ tạo biến riêng hoặc map vào description nếu lười sửa Model)
   );
 
@@ -83,6 +85,7 @@ class MockData {
         price: 150000,
         stock: 100,
         mockImage: "https://cf.shopee.vn/file/5a5639634d078762586716867386.jpg",
+        active: true, // Dùng link ảnh mạng bất kỳ
       ),
       quantity: 2,
     ),
@@ -95,6 +98,7 @@ class MockData {
         description: "",
         price: 34990000,
         stock: 10,
+        active: true, // Dùng link ảnh mạng bất kỳ
         // mockImage tự xử lý trong Model Product
       ),
       quantity: 1,

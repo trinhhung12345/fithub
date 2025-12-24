@@ -69,4 +69,29 @@ class AuthService {
       return AuthResponse(code: 500, message: "Lỗi parse JSON: $e");
     }
   }
+
+  Future<bool> requestNewPassword(String email) async {
+    // URL: .../api/v1/forgot-password (Lưu ý: Không có /auth theo link bạn gửi)
+    // Nếu link thực tế là /auth/forgot-password thì bạn sửa lại nhé
+    final url = Uri.parse('${AppConfig.baseUrl}/forgot-password');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"email": email}),
+      );
+
+      final json = jsonDecode(response.body);
+
+      // Check code 200
+      if (json['code'] == 200) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print("Lỗi Forgot Password: $e");
+      return false;
+    }
+  }
 }

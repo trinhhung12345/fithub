@@ -14,7 +14,13 @@ class OrderViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // Tabs hiển thị trên UI
-  final List<String> statusList = ["Tất cả", "Đang xử lý", "Đã giao", "Đã hủy"];
+  final List<String> statusList = [
+    "Tất cả",
+    "Chờ xác nhận",
+    "Đang giao",
+    "Hoàn thành",
+    "Đã hủy",
+  ];
   int _selectedStatusIndex = 0;
   int get selectedStatusIndex => _selectedStatusIndex;
 
@@ -50,14 +56,51 @@ class OrderViewModel extends ChangeNotifier {
     } else {
       final uiStatus = statusList[_selectedStatusIndex];
 
-      // LOGIC MAP STATUS: Backend ("NEW") <-> UI ("Đang xử lý")
       _filteredOrders = _allOrders.where((order) {
-        if (uiStatus == "Đang xử lý") return order.status == "NEW";
-        if (uiStatus == "Đã giao")
-          return order.status == "DELIVERED"; // Dự đoán
-        if (uiStatus == "Đã hủy") return order.status == "CANCELLED"; // Dự đoán
+        // Map từ UI Tab sang Backend Status
+        if (uiStatus == "Chờ xác nhận") {
+          return order.status == "NEW" ||
+              order.status == "CONFIRMED"; // Gom cả 2 vào tab đầu
+        }
+        if (uiStatus == "Đang giao") return order.status == "DELIVERING";
+        if (uiStatus == "Hoàn thành") return order.status == "DONE";
+        if (uiStatus == "Đã hủy") return order.status == "CANCEL";
         return false;
       }).toList();
     }
+  }
+
+  Future<bool> cancelOrder(int orderId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final success = await _orderService.cancelOrder(orderId);
+
+    if (success) {
+      // --- CẬP NHẬT UI LOCAL NGAY LẬP TỨC ---
+      // Tìm đơn hàng trong list và đổi status thành CANCEL
+      final index = _allOrders.indexWhere((o) => o.id == orderId);
+      if (index != -1) {
+        // Vì OrderModel là final (immutable), ta phải tạo object mới copy từ cũ
+        final oldOrder = _allOrders[index];
+        final newOrder = OrderModel(
+          id: oldOrder.id,
+          status: "CANCEL", // Cập nhật status mới
+          totalAmount: oldOrder.totalAmount,
+          createdAt: oldOrder.createdAt,
+          items: oldOrder.items,
+        );
+
+        _allOrders[index] = newOrder;
+
+        // Cập nhật lại list filter hiện tại
+        _filterOrders();
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+
+    return success;
   }
 }

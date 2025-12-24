@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../configs/app_config.dart';
-import '../../../data/mock/mock_data.dart';
-import '../../../data/models/notification_model.dart';
+import '../../../data/models/order_model.dart';
+import '../../../data/services/order_service.dart';
 
 class NotificationViewModel extends ChangeNotifier {
-  List<NotificationModel> _notifications = [];
-  List<NotificationModel> get notifications => _notifications;
+  final OrderService _orderService = OrderService();
+
+  // Dùng luôn OrderModel để hiển thị
+  List<OrderModel> _notifications = [];
+  List<OrderModel> get notifications => _notifications;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -14,13 +16,17 @@ class NotificationViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    if (AppConfig.mockNotification) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      // Để test trang TRỐNG: Bạn comment dòng dưới lại
-      _notifications = List.from(MockData.notifications);
-      // _notifications = []; // Mở comment dòng này để test trang trống
-    } else {
-      // API thật sau này
+    try {
+      // 1. Gọi API lấy danh sách đơn hàng
+      final orders = await _orderService.getMyOrders();
+
+      // 2. Sắp xếp: Đơn mới nhất (ID lớn nhất) lên đầu
+      orders.sort((a, b) => b.id.compareTo(a.id));
+
+      _notifications = orders;
+    } catch (e) {
+      print("Lỗi load thông báo: $e");
+      _notifications = [];
     }
 
     _isLoading = false;

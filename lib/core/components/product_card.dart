@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../configs/app_colors.dart';
 import '../../configs/app_text_styles.dart';
+import '../../data/models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String name;
   final String price;
-  final String? oldPrice; // Có thể null nếu không giảm giá
+  final String? oldPrice;
+  final List<ProductTag> tags; // <-- THÊM THAM SỐ NÀY
   final VoidCallback? onTap;
   final VoidCallback? onFavorite;
 
@@ -16,6 +18,7 @@ class ProductCard extends StatelessWidget {
     required this.name,
     required this.price,
     this.oldPrice,
+    this.tags = const [], // Mặc định rỗng
     this.onTap,
     this.onFavorite,
   });
@@ -26,24 +29,22 @@ class ProductCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF9F9F9), // Nền xám rất nhạt
+          color: const Color(0xFFF9F9F9),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Ảnh + Nút Tim
+            // 1. Ảnh
             Expanded(
               child: Stack(
                 children: [
-                  // Ảnh sản phẩm
                   Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Center(
                       child: Image.network(
                         imageUrl,
                         fit: BoxFit.contain,
-                        // Xử lý khi lỗi ảnh (optional)
                         errorBuilder: (context, error, stackTrace) =>
                             const Icon(
                               Icons.image_not_supported,
@@ -52,7 +53,6 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Icon trái tim
                   Positioned(
                     top: 0,
                     right: 0,
@@ -66,20 +66,57 @@ class ProductCard extends StatelessWidget {
               ),
             ),
 
-            // 2. Thông tin text
+            // 2. Thông tin
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- HIỂN THỊ TAGS (MỚI) ---
+                  if (tags.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Wrap(
+                        spacing: 4, // Khoảng cách ngang giữa các tag
+                        runSpacing: 4, // Khoảng cách dọc
+                        children: tags.take(2).map((tag) {
+                          // Chỉ lấy tối đa 2 tag để đỡ vỡ giao diện
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: Colors.blue.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Text(
+                              "${tag.type} : ${tag.name}", // Format TYPE : NAME
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                  // ---------------------------
                   Text(
                     name,
                     style: AppTextStyles.body.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: 14,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis, // Cắt bớt nếu tên dài
+                    maxLines: 1, // Giảm xuống 1 dòng để nhường chỗ cho tag
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -88,18 +125,22 @@ class ProductCard extends StatelessWidget {
                         price,
                         style: AppTextStyles.body.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.black,
+                          fontSize: 13,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Chỉ hiện giá cũ nếu có
                       if (oldPrice != null)
-                        Text(
-                          oldPrice!,
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.secondary, // Màu cam nhạt/nâu
-                            decoration: TextDecoration.lineThrough,
-                            fontSize: 12,
+                        Expanded(
+                          // Bọc Expanded để giá cũ không gây lỗi tràn
+                          child: Text(
+                            oldPrice!,
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.secondary,
+                              decoration: TextDecoration.lineThrough,
+                              fontSize: 10,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                     ],

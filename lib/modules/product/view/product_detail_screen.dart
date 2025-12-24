@@ -90,7 +90,52 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           product.name,
                           style: AppTextStyles.h2.copyWith(fontSize: 20),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
+
+                        // --- HIỂN THỊ TAGS (MỚI) ---
+                        if (product.tags.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: product.tags.map((tag) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(
+                                      0.08,
+                                    ), // Màu nền cam nhạt
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.primary.withOpacity(0.2),
+                                    ),
+                                  ),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.primary,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: "${tag.type}: ",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ), // In đậm Type
+                                        ),
+                                        TextSpan(text: tag.name),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        // ---------------------------
 
                         // --- Giá tiền ---
                         Text(
@@ -387,11 +432,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   ) {
     // Lưu ý: Truyền viewModel vào để gọi hàm addReview
     final reviews = viewModel.reviews;
+    final myReview = viewModel.myReview;
+    final bool isReviewed = viewModel.hasReviewed;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header: Tiêu đề + Nút Viết đánh giá
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -400,71 +446,67 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: AppTextStyles.h2.copyWith(fontSize: 18),
             ),
 
-            // Nút Viết Đánh Giá Mới
+            // --- NÚT BẤM ĐỔI TRẠNG THÁI ---
             TextButton.icon(
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (dialogContext) => WriteReviewDialog(
+                    // Nếu đã review -> Điền sẵn dữ liệu cũ
+                    // Nếu chưa -> Điền mặc định (5 sao, rỗng)
+                    initialRating: isReviewed ? myReview!['rating'] : 5,
+                    initialContent: isReviewed ? myReview!['content'] : "",
+
                     onSubmit: (rating, content) async {
-                      // 1. Thử Gửi đánh giá mới (Add)
-                      final errorAdd = await context
-                          .read<ProductDetailViewModel>()
-                          .addReview(rating, content);
+                      String? errorMessage;
+
+                      if (isReviewed) {
+                        // --- GỌI HÀM SỬA (UPDATE) ---
+                        errorMessage = await context
+                            .read<ProductDetailViewModel>()
+                            .editMyReview(rating, content);
+                      } else {
+                        // --- GỌI HÀM THÊM MỚI (ADD) ---
+                        errorMessage = await context
+                            .read<ProductDetailViewModel>()
+                            .addReview(rating, content);
+                      }
 
                       if (!context.mounted) return;
 
-                      if (errorAdd == null) {
-                        // -> Thành công ngay lần đầu
-                        FitHubDialog.show(
-                          context,
-                          title: "Thành công",
-                          content: "Cảm ơn đánh giá của bạn!",
-                          buttonText: "Đóng",
+                      // Xử lý thông báo (dùng FitHubDialog hoặc SnackBar)
+                      if (errorMessage == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isReviewed
+                                  ? "Đã cập nhật đánh giá!"
+                                  : "Đã gửi đánh giá!",
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
                         );
                       } else {
-                        // 2. Nếu lỗi (nghi ngờ là đã đánh giá rồi), hỏi người dùng có muốn Cập nhật không?
-                        // (Bạn có thể check chuỗi errorAdd chứa chữ "already reviewed" để chắc chắn hơn)
-
-                        FitHubDialog.show(
-                          context,
-                          title: "Đã có đánh giá",
-                          content:
-                              "Bạn đã đánh giá sản phẩm này rồi. Bạn có muốn cập nhật lại nội dung không?",
-                          isSuccess: false, // Icon chấm than
-                          buttonText: "Cập nhật ngay",
-                          onPressed: () async {
-                            // --- GỌI HÀM CẬP NHẬT (UPDATE) ---
-                            final errorUpdate = await context
-                                .read<ProductDetailViewModel>()
-                                .editMyReview(rating, content);
-
-                            if (context.mounted) {
-                              if (errorUpdate == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Cập nhật thành công!"),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(errorUpdate),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(errorMessage),
+                            backgroundColor: Colors.red,
+                          ),
                         );
                       }
                     },
                   ),
                 );
               },
-              icon: const Icon(Icons.edit, size: 16, color: AppColors.primary),
-              label: Text("Viết đánh giá", style: AppTextStyles.link),
+              icon: Icon(
+                isReviewed ? Icons.edit_note : Icons.edit,
+                size: 16,
+                color: AppColors.primary,
+              ),
+              label: Text(
+                isReviewed ? "Sửa đánh giá" : "Viết đánh giá",
+                style: AppTextStyles.link,
+              ),
             ),
           ],
         ),

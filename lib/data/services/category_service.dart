@@ -15,7 +15,11 @@ class CategoryService {
 
       // 3. Parse kết quả
       if (response is List) {
-        return response.map((json) => Category.fromJson(json)).toList();
+        return response
+            .map((json) => Category.fromJson(json))
+            // --- THÊM BỘ LỌC TẠI ĐÂY ---
+            .where((category) => category.active == true) // Chỉ lấy active
+            .toList();
       }
       return [];
     } catch (e) {

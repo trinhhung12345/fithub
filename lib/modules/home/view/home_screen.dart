@@ -16,6 +16,8 @@ import '../../cart/view/cart_screen.dart';
 import '../../category/view/all_categories_screen.dart';
 import '../../search/view/search_screen.dart';
 import '../../category/view_model/category_view_model.dart';
+import '../../profile/view_model/profile_view_model.dart';
+import '../../profile/view/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,13 +35,17 @@ class _HomeScreenState extends State<HomeScreen> {
       context
           .read<CategoryViewModel>()
           .fetchCategories(); // <-- Gọi API lấy danh mục
+      context.read<ProfileViewModel>().getProfile();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
-
+    final homeViewModel = context.watch<HomeViewModel>();
+    // Lấy thêm ProfileViewModel để lấy thông tin user
+    final profileViewModel = context.watch<ProfileViewModel>();
+    final user = profileViewModel.user;
     // Lấy tối đa 5 sản phẩm đầu tiên
     final top5Products = viewModel.products.take(5).toList();
 
@@ -47,7 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => viewModel.fetchProducts(),
+          onRefresh: () async {
+            // Khi kéo reload thì load lại cả sản phẩm và thông tin user
+            homeViewModel.fetchProducts();
+            profileViewModel.getProfile();
+          },
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             physics: const AlwaysScrollableScrollPhysics(),
@@ -56,17 +66,31 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // 1. Header
                 HomeHeader(
-                  avatarUrl: 'https://i.pravatar.cc/150?img=11',
+                  // Lấy avatar và tên từ user model
+                  avatarUrl: user != null
+                      ? 'https://i.pravatar.cc/150?u=${user.id}'
+                      : null,
+
+                  // Truyền tên vào đây
+                  userName: user?.name,
+
                   onCartTap: () {
-                    // Chuyển sang màn hình Giỏ hàng
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CartScreen()),
+                    );
+                  },
+                  onAvatarTap: () {
+                    // Chuyển sang Tab Profile (Tab 3)
+                    // Cách đơn giản nhất là dùng DefaultTabController hoặc GlobalKey
+                    // Nhưng ở đây mình để tạm print hoặc bạn có thể navigate
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const CartScreen(),
+                        builder: (context) => const ProfileScreen(),
                       ),
                     );
                   },
-                  onAvatarTap: () {},
                 ),
 
                 const SizedBox(height: 20),
@@ -152,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         imageUrl: product.imageUrl,
                         name: product.name,
                         price: product.formattedPrice,
+                        tags: product.tags,
                         onTap: () {
                           // Chuyển sang chi tiết
                           Navigator.push(

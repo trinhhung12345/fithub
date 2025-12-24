@@ -4,6 +4,10 @@ import '../../../configs/app_colors.dart';
 import '../../../configs/app_text_styles.dart';
 import '../../../core/components/fit_hub_back_button.dart';
 import '../../../data/models/order_model.dart';
+import '../../../core/utils/order_status_helper.dart';
+import 'package:provider/provider.dart';
+import '../../../core/components/fit_hub_dialog.dart';
+import '../view_model/order_view_model.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   final OrderModel order;
@@ -14,6 +18,7 @@ class OrderDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
+    bool canCancel = order.status == "NEW";
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -62,29 +67,60 @@ class OrderDetailScreen extends StatelessWidget {
           top: false, // Không cần tránh phần trên của container
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Logic Mua lại: Thường là add tất cả items vào giỏ rồi chuyển sang Cart
-                  print("Mua lại đơn #${order.id}");
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+            child: Row(
+              children: [
+                // Nút HỦY ĐƠN (Chỉ hiện nếu canCancel = true)
+                if (canCancel)
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        _confirmCancel(context);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 50),
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        "Hủy đơn hàng",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  "Mua lại đơn này",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+
+                if (canCancel) const SizedBox(width: 16),
+
+                // Nút MUA LẠI (Luôn hiện)
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Logic Mua lại: Thường là add tất cả items vào giỏ rồi chuyển sang Cart
+                      print("Mua lại đơn #${order.id}");
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(0, 50),
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      "Mua lại",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -95,34 +131,34 @@ class OrderDetailScreen extends StatelessWidget {
   // --- WIDGETS CON ---
 
   Widget _buildStatusSection() {
-    // Map status sang màu và text tiếng Việt
-    Color statusColor = Colors.blue;
-    String statusText = "Đang xử lý";
-    IconData statusIcon = Icons.inventory_2_outlined;
-
-    if (order.status == "NEW") {
-      statusColor = AppColors.primary;
-      statusText = "Đang xử lý";
-    } else if (order.status == "DELIVERED") {
-      statusColor = Colors.green;
-      statusText = "Giao hàng thành công";
-      statusIcon = Icons.check_circle_outline;
-    } else if (order.status == "CANCELLED") {
-      statusColor = Colors.red;
-      statusText = "Đã hủy";
-      statusIcon = Icons.cancel_outlined;
-    }
+    final statusInfo = OrderStatusHelper.getStatusInfo(order.status);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border(left: BorderSide(color: statusColor, width: 4)),
+        // Viền màu bên trái để nhấn mạnh
+        border: Border(left: BorderSide(color: statusInfo.color, width: 4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(statusIcon, color: statusColor, size: 30),
+          // Icon lớn
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: statusInfo.color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(statusInfo.icon, color: statusInfo.color, size: 28),
+          ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,10 +172,11 @@ class OrderDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                statusText,
+                statusInfo.text, // Text tiếng Việt (Đang giao, Hoàn thành...)
                 style: TextStyle(
-                  color: statusColor,
+                  color: statusInfo.color,
                   fontWeight: FontWeight.w600,
+                  fontSize: 15,
                 ),
               ),
             ],
@@ -308,6 +345,43 @@ class OrderDetailScreen extends StatelessWidget {
         Text(label, style: const TextStyle(color: Colors.grey)),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
       ],
+    );
+  }
+
+  // Hàm hiện Popup xác nhận hủy đơn
+  void _confirmCancel(BuildContext context) {
+    FitHubDialog.show(
+      context,
+      title: "Xác nhận hủy",
+      content:
+          "Bạn có chắc chắn muốn hủy đơn hàng này không? Thao tác này không thể hoàn tác.",
+      isSuccess: false, // Icon cảnh báo
+      buttonText: "Đồng ý hủy",
+      onPressed: () async {
+        // Gọi ViewModel
+        final success = await context.read<OrderViewModel>().cancelOrder(
+          order.id,
+        );
+
+        if (!context.mounted) return;
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Đã hủy đơn hàng thành công"),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Quay về danh sách đơn hàng
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Hủy thất bại, vui lòng thử lại"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
     );
   }
 

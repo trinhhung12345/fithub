@@ -1,5 +1,21 @@
 import 'package:intl/intl.dart';
 
+class ProductTag {
+  final int id;
+  final String name;
+  final String type; // Ví dụ: SHOES, BAG, THE LUC...
+
+  ProductTag({required this.id, required this.name, required this.type});
+
+  factory ProductTag.fromJson(Map<String, dynamic> json) {
+    return ProductTag(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? "",
+      type: json['type'] ?? "",
+    );
+  }
+}
+
 // 1. Class hứng từng file ảnh
 class ProductFile {
   final int id;
@@ -28,7 +44,9 @@ class Product {
   final int? categoryId; // Field rời (dùng cho detail)
   final String? categoryName; // Field rời (dùng cho detail)
   final List<ProductFile> files; // Danh sách ảnh thật
+  final List<ProductTag> tags;
   final String? _mockImage;
+  final bool active;
 
   Product({
     required this.id,
@@ -40,27 +58,37 @@ class Product {
     this.categoryId,
     this.categoryName,
     this.files = const [],
+    this.tags = const [],
     String? mockImage,
+    required this.active,
   }) : _mockImage = mockImage;
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    // Xử lý Category (Hỗ trợ cả 2 kiểu response của API)
+    // Xử lý Category (Giữ nguyên logic cũ)
     ProductCategory? cat;
     if (json['category'] != null) {
       cat = ProductCategory.fromJson(json['category']);
     } else if (json['categoryId'] != null) {
-      // Nếu API trả về field rời, ta gom lại thành object Category để UI dễ dùng
       cat = ProductCategory(
         id: json['categoryId'],
         name: json['categoryName'] ?? "",
       );
     }
 
-    // Xử lý Files
+    // Xử lý Files (Giữ nguyên)
     var listFiles = json['files'] as List? ?? [];
     List<ProductFile> productFiles = listFiles
         .map((f) => ProductFile.fromJson(f))
         .toList();
+
+    // --- XỬ LÝ TAGS (MỚI) ---
+    var listTags = json['tags']; // Lấy raw data
+    List<ProductTag> productTags = [];
+
+    // Kiểm tra kỹ vì API có thể trả về null (như product id 19)
+    if (listTags != null && listTags is List) {
+      productTags = listTags.map((t) => ProductTag.fromJson(t)).toList();
+    }
 
     return Product(
       id: json['id'] ?? 0,
@@ -69,11 +97,12 @@ class Product {
       price: (json['price'] ?? 0).toDouble(),
       stock: json['stock'] ?? 0,
       category: cat,
-      // Lưu lại các field rời phòng khi cần
       categoryId: json['categoryId'],
       categoryName: json['categoryName'],
       files: productFiles,
+      tags: productTags, // <-- Gán vào model
       mockImage: null,
+      active: json['active'] ?? false,
     );
   }
 

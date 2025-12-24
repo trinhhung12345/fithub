@@ -97,6 +97,7 @@ class ReviewService {
     // Body vẫn cần gửi thông tin để backend validate/update
     final body = {"userId": userId, "rating": rating, "comment": comment};
 
+    print("LOG UPDATE REVIEW: Đang gửi Rating = $rating, Comment = $comment");
     try {
       final json = await BaseClient.put(url, body);
       if (json['code'] == 200) {

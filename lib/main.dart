@@ -12,6 +12,8 @@ import 'modules/checkout/view_model/checkout_view_model.dart';
 import 'modules/order/view_model/order_view_model.dart';
 import 'modules/notification/view_model/notification_view_model.dart';
 import 'modules/category/view_model/category_view_model.dart';
+import 'modules/profile/view_model/profile_view_model.dart';
+import 'modules/forgot_password/view_model/forgot_password_view_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -47,6 +49,12 @@ class MyApp extends StatelessWidget {
         ), // Thêm dòng này
         ChangeNotifierProvider(
           create: (_) => CategoryViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(
+          create: (_) => ProfileViewModel(),
+        ), // Thêm dòng này
+        ChangeNotifierProvider(
+          create: (_) => ForgotPasswordViewModel(),
         ), // Thêm dòng này
       ],
       child: MaterialApp(

@@ -209,6 +209,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           imageUrl: product.imageUrl,
                           name: product.name,
                           price: product.formattedPrice,
+                          tags: product.tags,
                           onTap: () {
                             Navigator.push(
                               context,

@@ -28,7 +28,10 @@ class ProductService {
       if (response is Map<String, dynamic> && response['data'] != null) {
         final dataList = response['data'];
         if (dataList is List) {
-          return dataList.map((json) => Product.fromJson(json)).toList();
+          return dataList
+              .map((json) => Product.fromJson(json))
+              .where((p) => p.active == true) // <--- LỌC ACTIVE
+              .toList();
         }
       }
       // Trường hợp 2: API trả về List trực tiếp [...] (Phòng hờ)
@@ -93,7 +96,10 @@ class ProductService {
       // 4. Parse kết quả
       // API trả về List [...]
       if (response is List) {
-        return response.map((json) => Product.fromJson(json)).toList();
+        return response
+            .map((json) => Product.fromJson(json))
+            .where((p) => p.active == true) // <--- LỌC ACTIVE
+            .toList();
       }
 
       return [];
@@ -114,14 +120,13 @@ class ProductService {
     final url = '${AppConfig.baseUrl}/products/category/$categoryId';
 
     try {
-      // 3. Gọi API (BaseClient tự gắn Token)
       final response = await BaseClient.get(url);
-
-      // 4. Parse kết quả (API trả về List)
       if (response is List) {
-        return response.map((json) => Product.fromJson(json)).toList();
+        return response
+            .map((json) => Product.fromJson(json))
+            .where((p) => p.active == true) // <--- LỌC ACTIVE
+            .toList();
       }
-
       return [];
     } catch (e) {
       print("Lỗi Get Products By Category: $e");

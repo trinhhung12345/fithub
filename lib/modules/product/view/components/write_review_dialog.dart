@@ -4,16 +4,31 @@ import '../../../../configs/app_text_styles.dart';
 
 class WriteReviewDialog extends StatefulWidget {
   final Function(int rating, String content) onSubmit;
+  final int initialRating; // <--- Thêm
+  final String initialContent;
 
-  const WriteReviewDialog({super.key, required this.onSubmit});
+  const WriteReviewDialog({
+    super.key,
+    required this.onSubmit,
+    this.initialRating = 5, // Mặc định 5 sao
+    this.initialContent = "", // Mặc định rỗng
+  });
 
   @override
   State<WriteReviewDialog> createState() => _WriteReviewDialogState();
 }
 
 class _WriteReviewDialogState extends State<WriteReviewDialog> {
-  int _rating = 5; // Mặc định 5 sao
-  final TextEditingController _contentController = TextEditingController();
+  late int _rating;
+  late TextEditingController _contentController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Gán giá trị ban đầu (nếu là Sửa thì lấy data cũ, nếu là Mới thì lấy mặc định)
+    _rating = widget.initialRating;
+    _contentController = TextEditingController(text: widget.initialContent);
+  }
 
   @override
   Widget build(BuildContext context) {
