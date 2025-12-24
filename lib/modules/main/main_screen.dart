@@ -4,6 +4,8 @@ import '../home/view/home_screen.dart';
 import '../order/view/order_history_screen.dart';
 import '../notification/view/notification_screen.dart';
 import '../profile/view/profile_screen.dart';
+import 'package:fithub/modules/chatbot/view/chatbot_sheet.dart';
+import '../../configs/app_colors.dart'; // Import màu
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -27,6 +29,33 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _pages[_currentIndex],
       // Sử dụng Component Footer đã tách
+
+      // --- THÊM PHẦN NÀY (Floating Action Button) ---
+      floatingActionButton:
+          _currentIndex ==
+              0 // Chỉ hiện ở Trang chủ
+          ? FloatingActionButton(
+              onPressed: () {
+                // Hiển thị khung chat dạng BottomSheet
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled:
+                      true, // Để popup full cao và đẩy được bàn phím
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => const ChatBotSheet(),
+                );
+              },
+              backgroundColor: AppColors.primary, // Màu cam chủ đạo
+              elevation: 4,
+              shape: const CircleBorder(), // Bo tròn hoàn toàn
+              child: const Icon(
+                Icons.chat_bubble_outline,
+                color: Colors.white,
+                size: 28,
+              ),
+            )
+          : null, // Các tab khác không hiện
+      // ----------------------------------------------
       bottomNavigationBar: FitHubBottomNav(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
