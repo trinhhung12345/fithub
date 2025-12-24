@@ -1,6 +1,7 @@
 class AppConfig {
   // Config chung
-  static const String baseUrl = 'http://100.127.71.42:6868/api/v1';
+  static const String baseUrl =
+      'https://mobile-backend-x50a.onrender.com/api/v1';
 
   // --- CÔNG TẮC CHI TIẾT ---
 
